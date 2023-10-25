@@ -29,7 +29,6 @@ Sattalite::Sattalite(/* args */): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS
     mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
     mpu.setGyroRange(MPU6050_RANGE_500_DEG);
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-    
 }
 
 Sattalite::~Sattalite()
@@ -42,5 +41,64 @@ void Sattalite::SDCardTest(){
 
 void Sattalite::BMP180Test()
 {
+    if (!bmp180.measureTemperature())
+	{
+		Serial.println("could not start temperature measurement, is a measurement already running?");
+		return;
+	}
 
+	//wait for the measurement to finish. proceed as soon as hasValue() returned true. 
+	do
+	{
+		delay(100);
+	} while (!bmp180.hasValue());
+
+	Serial.print("Temperature: "); 
+	Serial.print(bmp180.getTemperature()); 
+	Serial.println(" degC");
+
+	//start a pressure measurement. pressure measurements depend on temperature measurement, you should only start a pressure 
+	//measurement immediately after a temperature measurement. 
+	if (!bmp180.measurePressure())
+	{
+		Serial.println("could not start perssure measurement, is a measurement already running?");
+		return;
+	}
+
+	//wait for the measurement to finish. proceed as soon as hasValue() returned true. 
+	do
+	{
+		delay(100);
+	} while (!bmp180.hasValue());
+
+	Serial.print("Pressure: "); 
+	Serial.print(bmp180.getPressure());
+	Serial.println(" Pa");
+}
+
+void Sattalite::MPUTest()
+{
+     sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  /* Print out the values */
+  Serial.print("Acceleration X: ");
+  Serial.print(a.acceleration.x);
+  Serial.print(", Y: ");
+  Serial.print(a.acceleration.y);
+  Serial.print(", Z: ");
+  Serial.print(a.acceleration.z);
+  Serial.println(" m/s^2");
+
+  Serial.print("Rotation X: ");
+  Serial.print(g.gyro.x);
+  Serial.print(", Y: ");
+  Serial.print(g.gyro.y);
+  Serial.print(", Z: ");
+  Serial.print(g.gyro.z);
+  Serial.println(" rad/s");
+
+  Serial.print("Temperature: ");
+  Serial.print(temp.temperature);
+  Serial.println(" degC");
 }

@@ -26,4 +26,5 @@ public:
     ~Sattalite();
     void SDCardTest();
     void BMP180Test();
+    void MPUTest();
 };
