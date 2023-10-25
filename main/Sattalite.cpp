@@ -1,5 +1,5 @@
 #include "Sattalite.h"
-Sattalite::Sattalite(/* args */)
+Sattalite::Sattalite(/* args */): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS_TX_Pin)
 {
     if(!Serial){
         Serial.begin(115200); // DANGEROUS CODE!!!!!!!!!!11
@@ -26,11 +26,6 @@ Sattalite::Sattalite(/* args */)
     mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
     mpu.setGyroRange(MPU6050_RANGE_500_DEG);
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
-
-    /*GPS Module*/
-    if(!ss.begin(GPSBaud)){
-        Serial.println("Failed to find GPS chip");
-    }
 }
 
 Sattalite::~Sattalite()
