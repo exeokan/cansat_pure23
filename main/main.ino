@@ -2,13 +2,16 @@
 Sattalite* cansat;
 void setup(){
     Serial.begin(115200);
-    cansat = new Sattalite();
+    cansat = new Sattalite(); //problematic? memory leak?
     cansat->SDCardTest();
     cansat->BMP180Test();
     cansat->MPUTest();
+    cansat->GPSTest();
 }
 
 void loop(){
     Serial.println("in loop");
     delay(1000);
+    if(false)//?
+      delete cansat;
 }

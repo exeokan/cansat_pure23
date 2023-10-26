@@ -17,7 +17,7 @@ class Sattalite
 {
 private:
     SDCard sdCard;
-    BMP180I2C bmp180{0x77};
+    BMP180I2C bmp180;
     Adafruit_MPU6050 mpu;
     TinyGPSPlus gps;
     SoftwareSerial ss;// The serial connection to the GPS device
@@ -27,4 +27,5 @@ public:
     void SDCardTest();
     void BMP180Test();
     void MPUTest();
+    void GPSTest();
 };
