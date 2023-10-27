@@ -1,4 +1,13 @@
 #include "Sattalite.h"
+struct CollectiveSensorData
+{
+    std::string TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
+    ALTITUDE, PC_DEPLOYED, TEMPERATURE, VOLTAGE, PRESSURE, GPS_TIME,
+    GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE,
+    GPS_SATS, TILT_X, TILT_Y, CMD_ECHO;
+};
+
+
 Sattalite::Sattalite(/* args */): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS_TX_Pin)
 {
     Serial.println("Sat init...");
@@ -169,4 +178,11 @@ void Sattalite::GPSTest()
     Serial.println(F("No GPS detected: check wiring."));
     while(true);
   }
+}
+
+CollectiveSensorData Sattalite::GatherSensorData()
+{
+  CollectiveSensorData data;
+  data.TEAM_ID = "5655";
+  data.
 }
