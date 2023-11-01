@@ -48,7 +48,8 @@ void setup() {
   //Initialize MicroSD
   Serial.print("Initializing the MicroSD card module... ");
   initMicroSDCard();
-
+  pinMode(16, INPUT);
+  pinMode(33, OUTPUT);
 }
 
 void loop() {
@@ -57,8 +58,11 @@ void loop() {
   //Serial.printf("Picture file name: %s\n", path.c_str());
 
   //Take and Save Photo
-  takeSavePhoto(path);
-  pictureNumber++;
+  if(digitalRead(16)==HIGH){
+      takeSavePhoto(path);
+      pictureNumber++;
+      digitalWrite(33, LOW);
+  }
   delay(30); 
 }
 
