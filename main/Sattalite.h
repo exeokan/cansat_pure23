@@ -9,7 +9,7 @@
 #include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
 #include <string>
-
+#include <Adafruit_HMC5883_U.h>
 const int GPS_RX_Pin = 26,  GPS_TX_Pin = 25;
 const uint32_t GPSBaud = 4800;
 const byte BMP180_12C_Address= 0x77;
@@ -37,6 +37,7 @@ private:
     Adafruit_MPU6050 mpu;
     TinyGPSPlus gps;
     SoftwareSerial ss;// The serial connection to the GPS device
+    Adafruit_HMC5883_Unified mag;
 public:
     Sattalite(/* args */);
     ~Sattalite();
@@ -44,7 +45,10 @@ public:
     void BMP180Test();
     void MPUTest();
     void GPSTest();
-
+    bool missionFinished();
+    void HMCTest();
+    void displaySensorDetails(void);
+    
     void establishConnection();
     void isLanded() const;
     CollectiveSensorData GatherSensorData();

@@ -11,7 +11,11 @@ void setup(){
 
 void loop(){
     Serial.println("in loop");
+    cansat->HMCTest();
     delay(1000);
-    if(false)//?
-      delete cansat;
+    if(cansat->missionFinished()){
+        delete cansat;
+        //buzzer code
+    }
+   
 }
