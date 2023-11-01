@@ -31,7 +31,7 @@
 
 // Keep track of number of pictures
 unsigned int pictureNumber = 0;
-
+int signalInput=15;
 //Stores the camera configuration parameters
 camera_config_t config;
 
@@ -48,7 +48,7 @@ void setup() {
   //Initialize MicroSD
   Serial.print("Initializing the MicroSD card module... ");
   initMicroSDCard();
-  pinMode(16, INPUT);
+  pinMode(signalInput, INPUT);
   pinMode(33, OUTPUT);
 }
 
@@ -58,11 +58,18 @@ void loop() {
   //Serial.printf("Picture file name: %s\n", path.c_str());
 
   //Take and Save Photo
-  if(digitalRead(16)==HIGH){
+  if(digitalRead(signalInput)==LOW){
       takeSavePhoto(path);
       pictureNumber++;
       digitalWrite(33, LOW);
+      Serial.printf("Picture file name: %s\n", path.c_str());
   }
+  else 
+  {
+    Serial.println(digitalRead(signalInput));
+    digitalWrite(33, HIGH);
+  } 
+    
   delay(30); 
 }
 
