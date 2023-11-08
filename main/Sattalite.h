@@ -9,7 +9,7 @@
 #include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
 #include <string>
-#include <Adafruit_HMC5883_U.h>
+#include <QMC5883LCompass.h>
 const int GPS_RX_Pin = 26,  GPS_TX_Pin = 25;
 const uint32_t GPSBaud = 4800;
 const byte BMP180_12C_Address= 0x77;
@@ -37,23 +37,30 @@ private:
     Adafruit_MPU6050 mpu;
     TinyGPSPlus gps;
     SoftwareSerial ss;// The serial connection to the GPS device
-    Adafruit_HMC5883_Unified mag;
+    QMC5883LCompass compass;
+
+    const int RXD1=14;
+    const int TXD1=15;
+    int n_packetsSent=0;
+    string missionID;
 public:
     Sattalite(/* args */);
     ~Sattalite();
+    //test methods
     void SDCardTest();
     void BMP180Test();
     void MPUTest();
     void GPSTest();
+    void QMCTest();
+    //make some const if you can
+    void activateCAM();
+    bool detectTakeOff();
     bool missionFinished();
-    void HMCTest();
-    void displaySensorDetails(void);
-    
     void establishConnection();
-    void isLanded() const;
+    void isLanded();
     CollectiveSensorData GatherSensorData();
     void logToSD(CollectiveSensorData);
-    void sendDataToGC(CollectiveSensorData) const; 
+    void sendDataToGC(CollectiveSensorData); 
     void sendCommandToGC();
     void savePictures();
 };

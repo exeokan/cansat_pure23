@@ -1,16 +1,12 @@
 #include "Sattalite.h"
-void displayInfo(SoftwareSerial &ss, TinyGPSPlus &gps);
+void displayGPSInfo(SoftwareSerial &ss, TinyGPSPlus &gps);
 
 Sattalite::Sattalite(/* args */): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS_TX_Pin),mag(12345)
 {
     Serial.println("Sat init...");
     if(!Serial){
-        Serial.begin(115200); // DANGEROUS CODE!!!!!!!!!!11
-        //this Serial is for USB??
-        //https://www.arduino.cc/reference/en/language/functions/communication/serial/
-        //Serial faillerse noluyor
+        Serial.begin(115200);
     }
-
     /*BMP180 init*/
     Serial.println("bmp start");
     Wire.begin();
@@ -19,28 +15,27 @@ Sattalite::Sattalite(/* args */): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS
     {
       Serial.println("begin() failed. check your BMP180 Interface and I2C Address.");
     }
-	  bmp180.resetToDefaults();
-	//enable ultra high resolution mode for pressure measurements
-	  bmp180.setSamplingMode(BMP180MI::MODE_UHR);
-    Serial.println("mpu starts");
+    else{
+      bmp180.resetToDefaults();
+      //enable ultra high resolution mode for pressure measurements
+      bmp180.setSamplingMode(BMP180MI::MODE_UHR);
+    }
     /*MPU6050 init*/
     if (!mpu.begin()) {
-        Serial.println("Failed to find MPU6050 chip");
+      Serial.println("Failed to find MPU6050 chip");
     }
-    Serial.println("MPU6050 Found!");
-    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-    mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+    else{
+      Serial.println("MPU6050 Found!");
+      mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+      mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+      mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+    }
     /*GPS init*/
     ss.begin(GPSBaud);
-
-    if(!mag.begin())
-    {
-      /* There was a problem detecting the HMC5883 ... check your connections */
-      Serial.println("Ooops, no HMC5883 detected ... Check your wiring!");
-      while(1); //!
-      displaySensorDetails();
-    }
+    /*QMC Init*/
+    compass.init();
+    //Serial for espcam comm
+    Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);  
 }
 
 Sattalite::~Sattalite()
@@ -90,7 +85,7 @@ void Sattalite::BMP180Test()
 
 void Sattalite::MPUTest()
 {
-     sensors_event_t a, g, temp;
+  sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
   /* Print out the values */
@@ -120,7 +115,7 @@ void Sattalite::GPSTest()
   // This sketch displays information every time a new sentence is correctly encoded.
   while (ss.available() > 0)
     if (gps.encode(ss.read()))
-      displayInfo(ss, gps);
+      displayGPSInfo(ss, gps);
 
   if (millis() > 5000 && gps.charsProcessed() < 10)
   {
@@ -134,65 +129,74 @@ bool Sattalite::missionFinished()
   return false;
 }
 
-void Sattalite::HMCTest()
+void Sattalite::QMCTest()
 {
-    sensors_event_t event; 
-  mag.getEvent(&event);
- 
-  /* Display the results (magnetic vector values are in micro-Tesla (uT)) */
-  Serial.print("X: "); Serial.print(event.magnetic.x); Serial.print("  ");
-  Serial.print("Y: "); Serial.print(event.magnetic.y); Serial.print("  ");
-  Serial.print("Z: "); Serial.print(event.magnetic.z); Serial.print("  ");Serial.println("uT");
+  int x, y, z;
+  // Read compass values
+  compass.read();
+  byte a = compass.getAzimuth();
+  Serial.print("Azimuth: ");
+  Serial.println(a);
 
-  // Hold the module so that Z is pointing 'up' and you can measure the heading with x&y
-  // Calculate heading when the magnetometer is level, then correct for signs of axis.
-  float heading = atan2(event.magnetic.y, event.magnetic.x);
+  char myArray[3];
+  compass.getDirection(myArray, a);
   
-  // Once you have your heading, you must then add your 'Declination Angle', which is the 'Error' of the magnetic field in your location.
-  // Find yours here: http://www.magnetic-declination.com/
-  // Mine is: -13* 2' W, which is ~13 Degrees, or (which we need) 0.22 radians
-  // If you cannot find your Declination, comment out these two lines, your compass will be slightly off.
-  //Sabanci +6° 5' 
-  float declinationAngle = 0.11;
-  heading += declinationAngle;
+  Serial.print(myArray[0]);
+  Serial.print(myArray[1]);
+  Serial.println(myArray[2]);
+
+  // Return XYZ readings
+  x = compass.getX();
+  y = compass.getY();
+  z = compass.getZ();
+  // Print
+  Serial.print("X: ");
+  Serial.print(x);
+  Serial.print(" Y: ");
+  Serial.print(y);
+  Serial.print(" Z: ");
+  Serial.print(z);
+  Serial.println();
   
-  // Correct for when signs are reversed.
-  if(heading < 0)
-    heading += 2*PI;
-    
-  // Check for wrap due to addition of declination.
-  if(heading > 2*PI)
-    heading -= 2*PI;
-   
-  // Convert radians to degrees for readability.
-  float headingDegrees = heading * 180/M_PI; 
-  
-  Serial.print("Heading (degrees): "); Serial.println(headingDegrees);
+  delay(250);
 }
 
+void Sattalite::activateCAM()
+{
+  Serial1.write('O');
+  delay(100);
+  Serial1.write('K'); 
+}
+/*
+std::string TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
+    ALTITUDE, PC_DEPLOYED, TEMPERATURE, VOLTAGE, PRESSURE, GPS_TIME,
+    GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE,
+    GPS_SATS, TILT_X, TILT_Y, CMD_ECHO;
+*/
 CollectiveSensorData Sattalite::GatherSensorData()
 {
-  /*CollectiveSensorData data;
+  CollectiveSensorData data;
   data.TEAM_ID = "5655";
-  data.*/
+  data.MISSION_TIME="";
+  data.PACKET_COUNT=n_packetsSent; n_packetsSent++;
+  data.MODE="FLIGHT";
+  data.STATE="";
+  data.ALTITUDE="";
+  data.PC_DEPLOYED
+  data.TEMPERATURE=""; 
+  data.VOLTAGE=""; 
+  data.PRESSURE=""; 
+  data.GPS_TIME="";
+  data.GPS_ALTITUDE=""; 
+  data.GPS_LATITUDE=""; 
+  data.GPS_LONGITUDE="";
+  data.GPS_SATS=""; 
+  data.TILT_X=""; 
+  data.TILT_Y=""; 
+  data.CMD_ECHO=""
 }
 
-void Sattalite::displaySensorDetails(void){
-  sensor_t sensor;
-  mag.getSensor(&sensor);
-  Serial.println("------------------------------------");
-  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
-  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
-  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
-  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" uT");
-  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" uT");
-  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" uT");  
-  Serial.println("------------------------------------");
-  Serial.println("");
-  delay(500);
-}
-
-void displayInfo(SoftwareSerial &ss, TinyGPSPlus &gps){
+void displayGPSInfo(SoftwareSerial &ss, TinyGPSPlus &gps){
   Serial.print(F("Location: ")); 
   if (gps.location.isValid())
   {

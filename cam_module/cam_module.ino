@@ -139,9 +139,9 @@ void configInitCamera(){
 }
 
 void initMicroSDCard(){
-  // Start Micro SD card
+  // Start Micro SD card	
   Serial.println("Starting SD Card");
-  if(!SD_MMC.begin("/sdcard", true)){
+  if(!SD_MMC.begin("/sdcard", true)){ //also disables auto flash
     Serial.println("SD Card Mount Failed");
     return;
   }
@@ -155,14 +155,10 @@ void initMicroSDCard(){
 void takeSavePhoto(String path){
   // Take Picture with Camera
   camera_fb_t  * fb = esp_camera_fb_get();
-
-  
-  
   if(!fb) {
     Serial.println("Camera capture failed");
     return;
   }
-
   // Save picture to microSD card
   fs::FS &fs = SD_MMC; 
   File file = fs.open(path.c_str(), FILE_WRITE);
