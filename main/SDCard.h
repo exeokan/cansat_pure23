@@ -11,15 +11,15 @@ private:
 public:
     SDCard(/* args */);
     ~SDCard();
-    void listDir(fs::FS &fs, const char * dirname, uint8_t levels);
-    void createDir(fs::FS &fs, const char * path);
-    void removeDir(fs::FS &fs, const char * path);
-    void readFile(fs::FS &fs, const char * path);
-    void writeFile(fs::FS &fs, const char * path, const char * message);
-    void appendFile(fs::FS &fs, const char * path, const char * message);
-    void renameFile(fs::FS &fs, const char * path1, const char * path2);
-    void deleteFile(fs::FS &fs, const char * path);
-    void testFileIO(fs::FS &fs, const char * path);
+    void listDir( const char * dirname, uint8_t levels);
+    void createDir( const char * path);
+    void removeDir( const char * path);
+    void readFile( const char * path);
+    void writeFile( const char * path, const char * message);
+    void appendFile( const char * path, const char * message);
+    void renameFile( const char * path1, const char * path2);
+    void deleteFile( const char * path);
+    void testFileIO( const char * path);
     void testRun();
 };
 

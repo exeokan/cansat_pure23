@@ -10,23 +10,6 @@ SDCard::SDCard(/* args */)
         Serial.println("Card Mount Failed");
         return;
     }
-    uint8_t cardType = SD.cardType();
-    if(cardType == CARD_NONE){
-        Serial.println("No SD card attached");
-        return;
-    }
-    Serial.print("SD Card Type: ");
-    if(cardType == CARD_MMC){
-        Serial.println("MMC");
-    } else if(cardType == CARD_SD){
-        Serial.println("SDSC");
-    } else if(cardType == CARD_SDHC){
-        Serial.println("SDHC");
-    } else {
-        Serial.println("UNKNOWN");
-    }
-    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-    Serial.printf("SD Card Size: %lluMB\n", cardSize);
 }
 
 SDCard::~SDCard()
@@ -34,10 +17,10 @@ SDCard::~SDCard()
     //anything to go there?
 }
 
-void SDCard::listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+void SDCard::listDir(const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\n", dirname);
 
-    File root = fs.open(dirname);
+    File root = SD.open(dirname);
     if(!root){
         Serial.println("Failed to open directory");
         return;
@@ -53,7 +36,7 @@ void SDCard::listDir(fs::FS &fs, const char * dirname, uint8_t levels){
             Serial.print("  DIR : ");
             Serial.println(file.name());
             if(levels){
-                listDir(fs, file.path(), levels -1);
+                listDir(file.path(), levels -1);
             }
         } else {
             Serial.print("  FILE: ");
@@ -65,28 +48,28 @@ void SDCard::listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     }
 }
 
-void SDCard::createDir(fs::FS &fs, const char * path){
+void SDCard::createDir(const char * path){
     Serial.printf("Creating Dir: %s\n", path);
-    if(fs.mkdir(path)){
+    if(SD.mkdir(path)){
         Serial.println("Dir created");
     } else {
         Serial.println("mkdir failed");
     }
 }
 
-void SDCard::removeDir(fs::FS &fs, const char * path){
+void SDCard::removeDir(const char * path){
     Serial.printf("Removing Dir: %s\n", path);
-    if(fs.rmdir(path)){
+    if(SD.rmdir(path)){
         Serial.println("Dir removed");
     } else {
         Serial.println("rmdir failed");
     }
 }
 
-void SDCard::readFile(fs::FS &fs, const char * path){
+void SDCard::readFile(const char * path){
     Serial.printf("Reading file: %s\n", path);
 
-    File file = fs.open(path);
+    File file = SD.open(path);
     if(!file){
         Serial.println("Failed to open file for reading");
         return;
@@ -99,10 +82,10 @@ void SDCard::readFile(fs::FS &fs, const char * path){
     file.close();
 }
 
-void SDCard::writeFile(fs::FS &fs, const char * path, const char * message){
+void SDCard::writeFile(const char * path, const char * message){
     Serial.printf("Writing file: %s\n", path);
 
-    File file = fs.open(path, FILE_WRITE);
+    File file = SD.open(path, FILE_WRITE);
     if(!file){
         Serial.println("Failed to open file for writing");
         return;
@@ -115,10 +98,10 @@ void SDCard::writeFile(fs::FS &fs, const char * path, const char * message){
     file.close();
 }
 
-void SDCard::appendFile(fs::FS &fs, const char * path, const char * message){
+void SDCard::appendFile(const char * path, const char * message){
     Serial.printf("Appending to file: %s\n", path);
 
-    File file = fs.open(path, FILE_APPEND);
+    File file = SD.open(path, FILE_APPEND);
     if(!file){
         Serial.println("Failed to open file for appending");
         return;
@@ -131,18 +114,18 @@ void SDCard::appendFile(fs::FS &fs, const char * path, const char * message){
     file.close();
 }
 
-void SDCard::renameFile(fs::FS &fs, const char * path1, const char * path2){
+void SDCard::renameFile(const char * path1, const char * path2){
     Serial.printf("Renaming file %s to %s\n", path1, path2);
-    if (fs.rename(path1, path2)) {
+    if (SD.rename(path1, path2)) {
         Serial.println("File renamed");
     } else {
         Serial.println("Rename failed");
     }
 }
 
-void SDCard::deleteFile(fs::FS &fs, const char * path){
+void SDCard::deleteFile(const char * path){
     Serial.printf("Deleting file: %s\n", path);
-    if(fs.remove(path)){
+    if(SD.remove(path)){
         Serial.println("File deleted");
     } else {
         Serial.println("Delete failed");
@@ -150,8 +133,8 @@ void SDCard::deleteFile(fs::FS &fs, const char * path){
 }
 
 
-void SDCard::testFileIO(fs::FS &fs, const char * path){
-    File file = fs.open(path);
+void SDCard::testFileIO(const char * path){
+    File file = SD.open(path);
     static uint8_t buf[512];
     size_t len = 0;
     uint32_t start = millis();
@@ -176,7 +159,7 @@ void SDCard::testFileIO(fs::FS &fs, const char * path){
     }
 
 
-    file = fs.open(path, FILE_WRITE);
+    file = SD.open(path, FILE_WRITE);
     if(!file){
         Serial.println("Failed to open file for writing");
         return;
@@ -194,18 +177,36 @@ void SDCard::testFileIO(fs::FS &fs, const char * path){
 
 void SDCard::testRun()
 {
-    listDir(SD, "/", 0);
-    createDir(SD, "/mydir");
-    listDir(SD, "/", 0);
-    removeDir(SD, "/mydir");
-    listDir(SD, "/", 2);
-    writeFile(SD, "/hello.txt", "Hello ");
-    appendFile(SD, "/hello.txt", "World!\n");
-    readFile(SD, "/hello.txt");
-    deleteFile(SD, "/foo.txt");
-    renameFile(SD, "/hello.txt", "/foo.txt");
-    readFile(SD, "/foo.txt");
-    testFileIO(SD, "/test.txt");
+    uint8_t cardType = SD.cardType();
+    if(cardType == CARD_NONE){
+        Serial.println("No SD card attached");
+        return;
+    }
+    Serial.print("SD Card Type: ");
+    if(cardType == CARD_MMC){
+        Serial.println("MMC");
+    } else if(cardType == CARD_SD){
+        Serial.println("SDSC");
+    } else if(cardType == CARD_SDHC){
+        Serial.println("SDHC");
+    } else {
+        Serial.println("UNKNOWN");
+    }
+    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+    //read/write
+    Serial.printf("SD Card Size: %lluMB\n", cardSize);
+    listDir("/", 0);
+    createDir("/mydir");
+    listDir("/", 0);
+    removeDir("/mydir");
+    listDir("/", 2);
+    writeFile("/hello.txt", "Hello ");
+    appendFile("/hello.txt", "World!\n");
+    readFile("/hello.txt");
+    deleteFile("/foo.txt");
+    renameFile("/hello.txt", "/foo.txt");
+    readFile("/foo.txt");
+    testFileIO("/test.txt");
     Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
     Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 }

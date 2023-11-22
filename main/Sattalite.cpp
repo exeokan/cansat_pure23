@@ -1,16 +1,13 @@
 #include "Sattalite.h"
 void displayGPSInfo(SoftwareSerial &ss, TinyGPSPlus &gps);
 
-Sattalite::Sattalite(/* args */): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS_TX_Pin),mag(12345)
+Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS_TX_Pin), missionID(missionID)
 {
-    Serial.println("Sat init...");
     if(!Serial){
-        Serial.begin(115200);
+        Serial.begin(115200); //when usb is disconnected?
     }
     /*BMP180 init*/
-    Serial.println("bmp start");
     Wire.begin();
-    Serial.println("Wire done");
     if (!bmp180.begin())
     {
       Serial.println("begin() failed. check your BMP180 Interface and I2C Address.");
@@ -38,9 +35,6 @@ Sattalite::Sattalite(/* args */): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS
     Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);  
 }
 
-Sattalite::~Sattalite()
-{
-}
 
 void Sattalite::SDCardTest(){
   sdCard.testRun();
@@ -120,7 +114,6 @@ void Sattalite::GPSTest()
   if (millis() > 5000 && gps.charsProcessed() < 10)
   {
     Serial.println(F("No GPS detected: check wiring."));
-    while(true);
   }
 }
 
@@ -176,13 +169,17 @@ std::string TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
 CollectiveSensorData Sattalite::GatherSensorData()
 {
   CollectiveSensorData data;
+
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+  
   data.TEAM_ID = "5655";
   data.MISSION_TIME="";
-  data.PACKET_COUNT=n_packetsSent; n_packetsSent++;
+  data.PACKET_COUNT=n_packetsSent; n_packetsSent++; //burada mı yapmalı
   data.MODE="FLIGHT";
   data.STATE="";
   data.ALTITUDE="";
-  data.PC_DEPLOYED
+  data.PC_DEPLOYED="";
   data.TEMPERATURE=""; 
   data.VOLTAGE=""; 
   data.PRESSURE=""; 
@@ -193,7 +190,12 @@ CollectiveSensorData Sattalite::GatherSensorData()
   data.GPS_SATS=""; 
   data.TILT_X=""; 
   data.TILT_Y=""; 
-  data.CMD_ECHO=""
+  data.CMD_ECHO="";
+}
+
+void Sattalite::logToSD(CollectiveSensorData)
+{
+
 }
 
 void displayGPSInfo(SoftwareSerial &ss, TinyGPSPlus &gps){
