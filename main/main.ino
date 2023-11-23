@@ -2,7 +2,7 @@
 Sattalite* cansat;
 void setup(){
     Serial.begin(115200);
-    cansat = new Sattalite(); //problematic? memory leak?
+    cansat = new Sattalite("1"); //problematic? memory leak?
     cansat->SDCardTest();
     cansat->BMP180Test();
     cansat->MPUTest();
@@ -22,16 +22,16 @@ void loop(){
     while(!cansat->detectDrop()){
         cansat->activateCAM()
         delay(10)   
-    }*/
+    }
     auto lastTime = millis() - 1000;
     while(!cansat->isLanded()){
         if(lastTime-millis()>1000){
-            cansat->logToSD(cansat->GatherSensorData())
+            cansat->logToSD(cansat->GatherSensorData());
         }
     }
     if(cansat->missionFinished()){
         delete cansat;
         //buzzer code
     }
-   
+   */
 }
