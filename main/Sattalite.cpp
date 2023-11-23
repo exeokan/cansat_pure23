@@ -156,9 +156,7 @@ void Sattalite::QMCTest()
 
 void Sattalite::activateCAM()
 {
-  Serial1.write('O');
-  delay(100);
-  Serial1.write('K'); 
+  Serial1.write("BEGIN");
 }
 /*
 std::string TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
@@ -172,7 +170,7 @@ CollectiveSensorData Sattalite::GatherSensorData()
 
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-  
+
   data.TEAM_ID = "5655";
   data.MISSION_TIME="";
   data.PACKET_COUNT=n_packetsSent; n_packetsSent++; //burada mı yapmalı

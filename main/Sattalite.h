@@ -49,7 +49,7 @@ public:
  
     bool detectTakeOff();
     bool missionFinished();
-    void isLanded();
+    bool isLanded();
     CollectiveSensorData GatherSensorData();
     void logToSD(CollectiveSensorData);
 
