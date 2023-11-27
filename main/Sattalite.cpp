@@ -1,8 +1,9 @@
 #include "Sattalite.h"
-void displayGPSInfo(SoftwareSerial &ss, TinyGPSPlus &gps);
+void displayGPSInfo(TinyGPSPlus &gps);
 
-Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), ss(GPS_RX_Pin, GPS_TX_Pin), missionID(missionID)
+Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), missionID(missionID)
 {
+    missionStartTime=millis();
     if(!Serial){
         Serial.begin(115200); //when usb is disconnected?
     }
@@ -11,6 +12,7 @@ Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), ss(GPS_
     if (!bmp180.begin())
     {
       Serial.println("begin() failed. check your BMP180 Interface and I2C Address.");
+      //error code
     }
     else{
       bmp180.resetToDefaults();
@@ -28,11 +30,12 @@ Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), ss(GPS_
       mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
     }
     /*GPS init*/
-    ss.begin(GPSBaud);
+    Serial2.begin(GPSBaud);
     /*QMC Init*/
     compass.init();
-    //Serial for espcam comm
+    /*Serial for espcam comm*/
     Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);  
+
 }
 
 
@@ -107,13 +110,14 @@ void Sattalite::MPUTest()
 void Sattalite::GPSTest()
 {
   // This sketch displays information every time a new sentence is correctly encoded.
-  while (ss.available() > 0)
-    if (gps.encode(ss.read()))
-      displayGPSInfo(ss, gps);
-
-  if (millis() > 5000 && gps.charsProcessed() < 10)
+  long gps_begin= millis();
+  while (Serial2.available() > 0)
+    if (gps.encode(Serial2.read()))
+      displayGPSInfo(gps); 
+  if (gps.charsProcessed() < 10)
   {
     Serial.println(F("No GPS detected: check wiring."));
+    //error code
   }
 }
 
@@ -158,34 +162,88 @@ void Sattalite::activateCAM()
 {
   Serial1.write("BEGIN");
 }
+void Sattalite::calculateTilt()
+{
+  static double tilt_x, tilt_y, tilt_z = 0.0; 
+  static long lastTime = 0;
+
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  double timeDif= (millis()-lastTime)/1000.0;
+
+  tilt_xyz[0] += a.acceleration.x * timeDif;
+  tilt_xyz[1] += a.acceleration.y * timeDif;
+  tilt_xyz[2] += a.acceleration.z * timeDif;
+
+  lastTime= millis();
+}
 /*
 std::string TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
     ALTITUDE, PC_DEPLOYED, TEMPERATURE, VOLTAGE, PRESSURE, GPS_TIME,
     GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE,
     GPS_SATS, TILT_X, TILT_Y, CMD_ECHO;
 */
+
 CollectiveSensorData Sattalite::GatherSensorData()
 {
   CollectiveSensorData data;
-
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
 
   data.TEAM_ID = "5655";
   data.MISSION_TIME="";
   data.PACKET_COUNT=n_packetsSent; n_packetsSent++; //burada mı yapmalı
   data.MODE="FLIGHT";
   data.STATE="";
-  data.ALTITUDE="";
-  data.PC_DEPLOYED="";
-  data.TEMPERATURE=""; 
-  data.VOLTAGE=""; 
-  data.PRESSURE=""; 
-  data.GPS_TIME="";
-  data.GPS_ALTITUDE=""; 
-  data.GPS_LATITUDE=""; 
-  data.GPS_LONGITUDE="";
-  data.GPS_SATS=""; 
+
+  long gps_begin= millis();
+  //gps data
+  //try two times?
+  bool successfulRead = false;
+  for (int i = 0; i < 2; i++)
+  {
+    while (ss.available() > 0) {
+      if (gps.encode(Serial2.read())){
+        succesfulRead = true;
+        data.GPS_ALTITUDE= gps.altitude.isValid() ? std::to_string(gps.altitude.meters()):  "?"; 
+        data.GPS_LONGITUDE= gps.location.isValid() ? std::to_string(gps.location.lng()) : "?"; 
+        data.GPS_LATITUDE= gps.location.isValid() ? std::to_string(gps.location.lat()) : "?"; 
+        if(gps.time.isValid()){
+          data.GPS_TIME = std::to_string(gps.time.hour()) + ":" +
+          std::to_string(gps.time.minute())+ ":" +
+          std::to_string(gps.time.second());
+        }
+        else{
+          data.GPS_TIME= "?";
+        }
+        data.GPS_SATS= gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
+      }
+    }
+    if(succesfulRead)
+      break;
+  }
+  if(!succesfulRead){
+    data.GPS_ALTITUDE, data.GPS_LONGITUDE, data.GPS_LATITUDE, data.GPS_TIME, data.GPS_SATS= "NaN";
+  }   
+  if (gps.charsProcessed() < 10)
+  {
+    Serial.println(F("No GPS detected: check wiring."));
+    //error code
+    
+  }
+  else{
+    //remove error
+  }
+
+  data.PC_DEPLOYED= std::to_string(pc_deployed);
+  data.VOLTAGE="9.0"; 
+
+  double* bmp_res= getTempPressure();
+  if(bmp_res[0] == -1 || bmp_res[1] == -1);
+    //error code
+  data.TEMPERATURE=std::to_string(bmp_res[0]); 
+  data.PRESSURE=std::to_string(bmp_res[1]); 
+  delete bmp_res;
+
   data.TILT_X=""; 
   data.TILT_Y=""; 
   data.CMD_ECHO="";
@@ -196,7 +254,7 @@ void Sattalite::logToSD(CollectiveSensorData)
 
 }
 
-void displayGPSInfo(SoftwareSerial &ss, TinyGPSPlus &gps){
+void displayGPSInfo(TinyGPSPlus &gps){
   Serial.print(F("Location: ")); 
   if (gps.location.isValid())
   {
@@ -244,4 +302,39 @@ void displayGPSInfo(SoftwareSerial &ss, TinyGPSPlus &gps){
   }
 
   Serial.println();
+}
+
+double* Sattalite::getTempPressure()
+{
+  double* result = new double[2]{-1, -1};
+  //check error flags?
+  if (!bmp180.measureTemperature())
+	{
+		Serial.println("could not start temperature measurement, is a measurement already running?");
+		return result;
+	}
+
+	//wait for the measurement to finish. proceed as soon as hasValue() returned true. 
+	do
+	{
+		delay(100);
+	} while (!bmp180.hasValue());
+
+	result[0] = bmp180.getTemperature(); 
+
+	//start a pressure measurement. pressure measurements depend on temperature measurement, you should only start a pressure 
+	//measurement immediately after a temperature measurement. 
+	if (!bmp180.measurePressure())
+	{
+		return result;
+	}
+
+	//wait for the measurement to finish. proceed as soon as hasValue() returned true. 
+	do
+	{
+		delay(100);
+	} while (!bmp180.hasValue());
+
+	result[1] = bmp180.getPressure();
+  return result;
 }
