@@ -8,7 +8,7 @@ enum Modules{//->pin numbers
     gps=3,
     sd=4,
     cam=5
-}
+};
 class SattaliteErrLights
 {
 private:
@@ -16,28 +16,8 @@ private:
     std::unordered_map<Modules, bool> moduleStates;
 public:
     SattaliteErrLights(/* args */);
-    void RaiseError(Modules) ;
-    void LiftError(Modules) ;
-    bool isOkay(Modules) const;
+    void RaiseError(const Modules&) ;
+    void LiftError(const Modules&) ;
+    bool isOkay(const Modules&);
 };
 
-void SattaliteErrLights::RaiseError(const Modules &module) {
-    digitalWrite(module, HIGH);
-    unordered_map[module]=true;
-}
-
-void SattaliteErrLights::LiftError(const Modules &module) {
-    digitalWrite(module, LOW);
-    unordered_map[module]=false;
-}
-bool SattaliteErrLights::isOkay(const Modules &module) {
-    return moduleStates[module];
-}
-SattaliteErrLights::SattaliteErrLights(/* args */)
-{
-    pinMode(bmp, OUTPUT);
-    pinMode(mpu, OUTPUT);
-    pinMode(qmc, OUTPUT);
-    pinMode(gps, OUTPUT);
-    pinMode(cam, OUTPUT);
-}

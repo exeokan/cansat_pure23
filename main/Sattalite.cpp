@@ -1,4 +1,7 @@
 #include "Sattalite.h"
+
+std::string state_names[]={"STANDBY", "ASCENT", "DESCENT", "LANDED"};
+
 void displayGPSInfo(TinyGPSPlus &gps);
 
 Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), missionID(missionID)
@@ -201,9 +204,9 @@ CollectiveSensorData Sattalite::GatherSensorData()
   bool successfulRead = false;
   for (int i = 0; i < 2; i++)
   {
-    while (ss.available() > 0) {
+    while (Serial2.available() > 0) {
       if (gps.encode(Serial2.read())){
-        succesfulRead = true;
+        successfulRead = true;
         data.GPS_ALTITUDE= gps.altitude.isValid() ? std::to_string(gps.altitude.meters()):  "?"; 
         data.GPS_LONGITUDE= gps.location.isValid() ? std::to_string(gps.location.lng()) : "?"; 
         data.GPS_LATITUDE= gps.location.isValid() ? std::to_string(gps.location.lat()) : "?"; 
@@ -218,11 +221,11 @@ CollectiveSensorData Sattalite::GatherSensorData()
         data.GPS_SATS= gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
       }
     }
-    if(succesfulRead)
+    if(successfulRead)
       break;
     delay(100);
   }
-  if(!succesfulRead){
+  if(!successfulRead){
     data.GPS_ALTITUDE, data.GPS_LONGITUDE, data.GPS_LATITUDE, data.GPS_TIME, data.GPS_SATS= "NaN";
   }   
   if (gps.charsProcessed() < 10)
@@ -248,9 +251,10 @@ CollectiveSensorData Sattalite::GatherSensorData()
   data.TILT_X=tilt_xyz[0]; 
   data.TILT_Y=tilt_xyz[1]; 
   data.CMD_ECHO="";
+  return data;
 }
 
-void Sattalite::logToSD(CollectiveSensorData)
+void Sattalite::logToSD(CollectiveSensorData data)
 {
   std::ostringstream oss;
     oss << "{"
@@ -273,7 +277,8 @@ void Sattalite::logToSD(CollectiveSensorData)
         << "\"TILT_Y\":\"" << data.TILT_Y << "\","
         << "\"CMD_ECHO\":\"" << data.CMD_ECHO << "\""
         << "}";
-  Serial.println( oss.str() );
+  std::string str=oss.str();
+  Serial.println( str.c_str() );
 }
 
 void displayGPSInfo(TinyGPSPlus &gps){
@@ -361,6 +366,6 @@ double* Sattalite::getTempPressure()
   return result;
 }
 
-bool Sattalite::getState(){
+State Sattalite::getState(){
   return state;
 }

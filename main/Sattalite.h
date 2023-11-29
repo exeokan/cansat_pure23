@@ -9,7 +9,9 @@
 #include <TinyGPSPlus.h>
 #include <string>
 #include <QMC5883LCompass.h>
+#include <sstream>
 #include "SattaliteErrLights.h"
+
 const int GPS_RX_Pin = 26,  GPS_TX_Pin = 25;
 const uint32_t GPSBaud = 9600;
 const byte BMP180_12C_Address= 0x77;
@@ -27,10 +29,9 @@ enum State{
     standby = 0, 
     ascent = 1,
     descent = 2,
-    landed = 3;
-}
-std::string state_names={"STANDBY", "ASCENT", "DESCENT", "LANDED"};
-//std::string state_names[]={"STANDBY","ASCENT","DESCENT", "LANDED"};
+    landed = 3
+};
+extern std::string state_names[];
 class Sattalite
 {
 private:
@@ -46,6 +47,7 @@ private:
     State state = State::standby;
     bool pc_deployed=false;
     double tilt_xyz[3]={0, 0, 0};
+    SattaliteErrLights errLights;
 public:
     Sattalite(std::string);
     //test methods

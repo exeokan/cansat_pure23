@@ -20,6 +20,7 @@ long lastTime = millis();
 const int feedingRate = 100; // in ms
 
 void loop(){
+    /*
     if(millis()-lastTime > feedingRate){
         cansat->calculateTilt();
         //cansat->feedGPS() //Gather sensorda yapmayı iptal et
@@ -40,5 +41,5 @@ void loop(){
     }
     else {
         //buzzer code
-    }
+    }*/
 }
