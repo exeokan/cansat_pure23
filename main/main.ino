@@ -8,7 +8,6 @@ void setup(){
     cansat->MPUTest();
     cansat->GPSTest();
     cansat->QMCTest();
-
     //cansat->establishGC_Communincation();
 }
 
@@ -17,36 +16,29 @@ void setup(){
 // calculating tilt
 // implement bmp180 using the adafruit bmp085 library
 
+long lastTime = millis();
+const int feedingRate = 100; // in ms
+
 void loop(){
-  cansat->calculateTilt();
-  Serial.println("in loop");
-  delay(100);
-  /*if(in_drop){
-
-  }
-  else if(in_ascent){
-
-  }
-  else if(){
-
-  }
-  */
-    /*
-    if(lastTime-millis()>1000){
-        cansat->logToSD(cansat->GatherSensorData());
+    if(millis()-lastTime > feedingRate){
+        cansat->calculateTilt();
+        //cansat->feedGPS() //Gather sensorda yapmayı iptal et
     }
-    while(!cansat->detectTakeOff())
-        delay(10)
-    while(!cansat->detectDrop()){
-        cansat->activateCAM()
-        delay(10)   
+    //bunu bmp için de yap? yeni kütüpe bağlı
+    delay(100);
+    State currentState= cansat->getState();
+    if(currentState==State::standby){
+    cansat->detectTakeOff();
     }
-    auto lastTime = millis() - 1000;
-    while(!cansat->isLanded()){         
+    else if(currentState==State::ascent){
+    //detect dropoff
+    //if detected activate cam
     }
-    if(cansat->missionFinished()){
-        delete cansat;
+    else if (currentState==descent)
+    {
+        //detect landing
+    }
+    else {
         //buzzer code
     }
-   */
 }

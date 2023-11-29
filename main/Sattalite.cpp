@@ -2,8 +2,8 @@
 void displayGPSInfo(TinyGPSPlus &gps);
 
 Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), missionID(missionID)
+  , missionStartTime(millis())
 {
-    missionStartTime=millis();
     if(!Serial){
         Serial.begin(115200); //when usb is disconnected?
     }
@@ -164,17 +164,17 @@ void Sattalite::activateCAM()
 }
 void Sattalite::calculateTilt()
 {
-  static double tilt_x, tilt_y, tilt_z = 0.0; 
-  static long lastTime = 0;
+  //if mpu is fine->
+  static long lastTime = millis(); 
 
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
-  double timeDif= (millis()-lastTime)/1000.0;
+  double timeDif= (millis()-lastTime)/1000.0; // in seconds
 
-  tilt_xyz[0] += a.acceleration.x * timeDif;
-  tilt_xyz[1] += a.acceleration.y * timeDif;
-  tilt_xyz[2] += a.acceleration.z * timeDif;
+  tilt_xyz[0] += g.gyro.x * timeDif;
+  tilt_xyz[1] += g.gyro.y * timeDif;
+  tilt_xyz[2] += g.gyro.z * timeDif;
 
   lastTime= millis();
 }
@@ -190,10 +190,10 @@ CollectiveSensorData Sattalite::GatherSensorData()
   CollectiveSensorData data;
 
   data.TEAM_ID = "5655";
-  data.MISSION_TIME="";
-  data.PACKET_COUNT=n_packetsSent; n_packetsSent++; //burada mı yapmalı
+  data.MISSION_TIME= (millis()-missionStartTime)/1000.0; //seconds
+  data.PACKET_COUNT=n_packetsSent; n_packetsSent++;
   data.MODE="FLIGHT";
-  data.STATE="";
+  data.STATE = state_names[state];
 
   long gps_begin= millis();
   //gps data
@@ -220,6 +220,7 @@ CollectiveSensorData Sattalite::GatherSensorData()
     }
     if(succesfulRead)
       break;
+    delay(100);
   }
   if(!succesfulRead){
     data.GPS_ALTITUDE, data.GPS_LONGITUDE, data.GPS_LATITUDE, data.GPS_TIME, data.GPS_SATS= "NaN";
@@ -235,23 +236,44 @@ CollectiveSensorData Sattalite::GatherSensorData()
   }
 
   data.PC_DEPLOYED= std::to_string(pc_deployed);
-  data.VOLTAGE="9.0"; 
+  data.VOLTAGE="9.0"; //?
 
-  double* bmp_res= getTempPressure();
+  double* bmp_res= getTempPressure();//if bmp fine
   if(bmp_res[0] == -1 || bmp_res[1] == -1);
     //error code
   data.TEMPERATURE=std::to_string(bmp_res[0]); 
   data.PRESSURE=std::to_string(bmp_res[1]); 
   delete bmp_res;
 
-  data.TILT_X=""; 
-  data.TILT_Y=""; 
+  data.TILT_X=tilt_xyz[0]; 
+  data.TILT_Y=tilt_xyz[1]; 
   data.CMD_ECHO="";
 }
 
 void Sattalite::logToSD(CollectiveSensorData)
 {
-
+  std::ostringstream oss;
+    oss << "{"
+        << "\"TEAM_ID\":\"" << data.TEAM_ID << "\","
+        << "\"MISSION_TIME\":\"" << data.MISSION_TIME << "\","
+        << "\"PACKET_COUNT\":\"" << data.PACKET_COUNT << "\","
+        << "\"MODE\":\"" << data.MODE << "\","
+        << "\"STATE\":\"" << data.STATE << "\","
+        << "\"ALTITUDE\":\"" << data.ALTITUDE << "\","
+        << "\"PC_DEPLOYED\":\"" << data.PC_DEPLOYED << "\","
+        << "\"TEMPERATURE\":\"" << data.TEMPERATURE << "\","
+        << "\"VOLTAGE\":\"" << data.VOLTAGE << "\","
+        << "\"PRESSURE\":\"" << data.PRESSURE << "\","
+        << "\"GPS_TIME\":\"" << data.GPS_TIME << "\","
+        << "\"GPS_ALTITUDE\":\"" << data.GPS_ALTITUDE << "\","
+        << "\"GPS_LATITUDE\":\"" << data.GPS_LATITUDE << "\","
+        << "\"GPS_LONGITUDE\":\"" << data.GPS_LONGITUDE << "\","
+        << "\"GPS_SATS\":\"" << data.GPS_SATS << "\","
+        << "\"TILT_X\":\"" << data.TILT_X << "\","
+        << "\"TILT_Y\":\"" << data.TILT_Y << "\","
+        << "\"CMD_ECHO\":\"" << data.CMD_ECHO << "\""
+        << "}";
+  Serial.println( oss.str() );
 }
 
 void displayGPSInfo(TinyGPSPlus &gps){
@@ -337,4 +359,8 @@ double* Sattalite::getTempPressure()
 
 	result[1] = bmp180.getPressure();
   return result;
+}
+
+bool Sattalite::getState(){
+  return state;
 }
