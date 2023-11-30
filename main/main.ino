@@ -1,9 +1,16 @@
 #include "Sattalite.h"
+
+#include "bootloader_random.h"
+#include "esp_random.h"
+
 Sattalite* cansat;
 void setup(){
     Serial.begin(115200);
     Serial.println("Program begins...");
-    cansat = new Sattalite(std::to_string(rand()%1000)); //problematic? memory leak?
+    bootloader_random_enable();
+    int random=esp_random() % 10000;
+    bootloader_random_disable();
+    cansat = new Sattalite(std::to_string(random)); //problematic? memory leak?
     cansat->SDCardTest();
     cansat->BMP180Test();
     cansat->MPUTest();
@@ -19,16 +26,16 @@ void setup(){
 long lastFeed = millis();
 long lastDisplay = millis();
 const int feedingRate = 100; // in feed/ms
-const int displayRate = 1000; // in feed/ms
+const int displayRate = 900; // in feed/ms
 void loop(){
     //cansat->calculateTilt();
-    
     if(millis()-lastFeed > feedingRate){
         cansat->feedGPS(); //Gather sensorda yapmayı iptal et
         lastFeed=millis();
     }
     if(millis()-lastDisplay > displayRate){
-        cansat->fedGPSTest(); //Gather sensorda yapmayı iptal et
+        cansat->logToSD(cansat->GatherSensorData());
+        Serial.println("----------------------------");
         lastDisplay=millis();
     }
     /*

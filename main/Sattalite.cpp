@@ -26,6 +26,9 @@ Sattalite::Sattalite(std::string missionID): missionID(missionID)
       mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
       mpu.setGyroRange(MPU6050_RANGE_500_DEG);
       mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+      mpu_accel = mpu.getAccelerometerSensor();
+      mpu_gyro = mpu.getGyroSensor();    
     }
     /*GPS init*/
     Serial2.begin(GPSBaud);
@@ -33,7 +36,7 @@ Sattalite::Sattalite(std::string missionID): missionID(missionID)
     compass.init();
     /*Serial for espcam comm*/
     Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);  
-
+    fileName= "/record" + missionID + ".txt";
 }
 
 
@@ -201,18 +204,13 @@ void Sattalite::feedGPS()
 
 void Sattalite::calculateTilt()
 {
-  //if mpu is fine->
+  //if mpu is fine-> otw null pointer error will come!
   static long lastTime = millis(); 
-
-  sensors_event_t a, g, temp;
-  mpu.getEvent(&a, &g, &temp);
   
+  sensors_event_t g;
+  mpu_gyro->getEvent(&g);
+
   double timeDif= (millis()-lastTime)/1000.0; // in seconds
-  Serial.println(timeDif);
-  Serial.println(g.gyro.x);
-  Serial.println(g.gyro.y);
-  Serial.println(g.gyro.z);
-  Serial.println("--------------");
   tilt_xyz[0] += g.gyro.x * timeDif;
   tilt_xyz[1] += g.gyro.y * timeDif;
   tilt_xyz[2] += g.gyro.z * timeDif;
@@ -231,8 +229,8 @@ CollectiveSensorData Sattalite::GatherSensorData()
   CollectiveSensorData data;
 
   data.TEAM_ID = "5655";
-  data.MISSION_TIME= (millis()-missionStartTime)/1000.0; //seconds
-  data.PACKET_COUNT=n_packetsSent; n_packetsSent++;
+  data.MISSION_TIME= std::to_string((millis()-missionStartTime)/1000.0); //seconds
+  data.PACKET_COUNT= std::to_string(n_packetsSent); n_packetsSent++;
   data.MODE="FLIGHT";
   data.STATE = state_names[state];
   //gps data
@@ -255,10 +253,24 @@ CollectiveSensorData Sattalite::GatherSensorData()
   data.TEMPERATURE=std::to_string(bmp.readTemperature()); 
   // Calculate altitude assuming 'standard' barometric(!!!!!)
   // pressure of 1013.25 millibar = 101325 Pascal
-  data.PRESSURE=std::to_string(bmp.readAltitude()); 
+  data.PRESSURE=std::to_string(bmp.readPressure()); 
+  data.ALTITUDE=std::to_string(bmp.readAltitude()); 
+  //mpu
+  sensors_event_t accel;
+  mpu_accel->getEvent(&accel);
 
-  data.TILT_X=tilt_xyz[0]; 
-  data.TILT_Y=tilt_xyz[1]; 
+  data.ACC_X = std::to_string(accel.acceleration.x);
+  data.ACC_Y = std::to_string(accel.acceleration.y);
+  data.ACC_Z = std::to_string(accel.acceleration.z);
+
+  data.TILT_X = std::to_string(tilt_xyz[0]); 
+  data.TILT_Y = std::to_string(tilt_xyz[1]); 
+  //qmc
+  compass.read();
+  data.MAG_X = std::to_string(compass.getX());
+  data.MAG_Y = std::to_string(compass.getY());
+  data.MAG_Z = std::to_string(compass.getZ());
+  //cmd
   data.CMD_ECHO="";
   return data;
 }
@@ -282,12 +294,19 @@ void Sattalite::logToSD(CollectiveSensorData data)
         << "\"GPS_LATITUDE\":\"" << data.GPS_LATITUDE << "\","
         << "\"GPS_LONGITUDE\":\"" << data.GPS_LONGITUDE << "\","
         << "\"GPS_SATS\":\"" << data.GPS_SATS << "\","
-        << "\"TILT_X\":\"" << data.TILT_X << "\","
-        << "\"TILT_Y\":\"" << data.TILT_Y << "\","
-        << "\"CMD_ECHO\":\"" << data.CMD_ECHO << "\""
-        << "}";
+        << "\"ACC_X\":\"" << data.ACC_X << "\","
+        << "\"ACC_Y\":\"" << data.ACC_Y << "\","
+        << "\"ACC_Z\":\"" << data.ACC_Z << "\","
+        << "\"MAG_X\":\"" << data.MAG_X << "\","
+        << "\"MAG_Y\":\"" << data.MAG_Y << "\","
+        << "\"MAG_Z\":\"" << data.MAG_Z << "\""
+        << "}\n";
   std::string str=oss.str();
-  Serial.println( str.c_str() );
+  Serial.println( str.substr(0,150).c_str() );
+  Serial.println( str.substr(150).c_str() );
+  Serial.print("Length:"); Serial.println(str.length());
+
+  sdCard.appendFile(fileName.c_str(), oss.str().c_str());
 }
 
 void displayGPSInfo(TinyGPSPlus &gps){

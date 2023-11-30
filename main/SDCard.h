@@ -8,6 +8,7 @@ class SDCard
 {
 private:
     /* data */
+    bool working;
 public:
     SDCard(/* args */);
     ~SDCard();
@@ -21,5 +22,7 @@ public:
     void deleteFile( const char * path);
     void testFileIO( const char * path);
     void testRun();
+
+    bool isWorking();
 };
 

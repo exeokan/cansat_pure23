@@ -7,8 +7,12 @@ SDCard::SDCard(/* args */)
         //https://www.arduino.cc/reference/en/language/functions/communication/serial/
     }
     if(!SD.begin()){
+        working=false;
         Serial.println("Card Mount Failed");
         return;
+    }
+    else{
+        working=true;
     }
 }
 
@@ -209,4 +213,9 @@ void SDCard::testRun()
     testFileIO("/test.txt");
     Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
     Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+}
+
+bool SDCard::isWorking()
+{
+    return working;
 }
