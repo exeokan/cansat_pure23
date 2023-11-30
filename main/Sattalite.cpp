@@ -4,7 +4,7 @@ std::string state_names[]={"STANDBY", "ASCENT", "DESCENT", "LANDED"};
 
 void displayGPSInfo(TinyGPSPlus &gps);
 
-Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), missionID(missionID)
+Sattalite::Sattalite(std::string missionID): missionID(missionID)
   , missionStartTime(millis())
 {
     if(!Serial){
@@ -12,15 +12,10 @@ Sattalite::Sattalite(std::string missionID): bmp180(BMP180_12C_Address), mission
     }
     /*BMP180 init*/
     Wire.begin();
-    if (!bmp180.begin())
+    if (!bmp.begin())
     {
       Serial.println("begin() failed. check your BMP180 Interface and I2C Address.");
       //error code
-    }
-    else{
-      bmp180.resetToDefaults();
-      //enable ultra high resolution mode for pressure measurements
-      bmp180.setSamplingMode(BMP180MI::MODE_UHR);
     }
     /*MPU6050 init*/
     if (!mpu.begin()) {
@@ -48,39 +43,31 @@ void Sattalite::SDCardTest(){
 
 void Sattalite::BMP180Test()
 {
-  if (!bmp180.measureTemperature())
-	{
-		Serial.println("could not start temperature measurement, is a measurement already running?");
-		return;
-	}
+   Serial.print("Temperature = ");
+    Serial.print(bmp.readTemperature());
+    Serial.println(" *C");
+    
+    Serial.print("Pressure = ");
+    Serial.print(bmp.readPressure());
+    Serial.println(" Pa");
+    
+    // Calculate altitude assuming 'standard' barometric
+    // pressure of 1013.25 millibar = 101325 Pascal
+    Serial.print("Altitude = ");
+    Serial.print(bmp.readAltitude());
+    Serial.println(" meters");
 
-	//wait for the measurement to finish. proceed as soon as hasValue() returned true. 
-	do
-	{
-		delay(100);
-	} while (!bmp180.hasValue());
+    Serial.print("Pressure at sealevel (calculated) = ");
+    Serial.print(bmp.readSealevelPressure());
+    Serial.println(" Pa");
 
-	Serial.print("Temperature: "); 
-	Serial.print(bmp180.getTemperature()); 
-	Serial.println(" degC");
-
-	//start a pressure measurement. pressure measurements depend on temperature measurement, you should only start a pressure 
-	//measurement immediately after a temperature measurement. 
-	if (!bmp180.measurePressure())
-	{
-		Serial.println("could not start perssure measurement, is a measurement already running?");
-		return;
-	}
-
-	//wait for the measurement to finish. proceed as soon as hasValue() returned true. 
-	do
-	{
-		delay(100);
-	} while (!bmp180.hasValue());
-
-	Serial.print("Pressure: "); 
-	Serial.print(bmp180.getPressure());
-	Serial.println(" Pa");
+    // you can get a more precise measurement of altitude
+    // if you know the current sea level pressure which will
+    // vary with weather and such. If it is 1015 millibars
+    // that is equal to 101500 Pascals.
+    Serial.print("Real altitude = ");
+    Serial.print(bmp.readAltitude(101500));
+    Serial.println(" meters");
 }
 
 void Sattalite::MPUTest()
@@ -127,13 +114,14 @@ void Sattalite::fedGPSTest(){
       std::string GPS_ALTITUDE= gps.altitude.isValid() ? std::to_string(gps.altitude.meters()):  "?"; 
       std::string GPS_LONGITUDE= gps.location.isValid() ? std::to_string(gps.location.lng()) : "?"; 
       std::string GPS_LATITUDE= gps.location.isValid() ? std::to_string(gps.location.lat()) : "?"; 
+      std::string GPS_TIME;
       if(gps.time.isValid()){
-        std::string GPS_TIME = std::to_string(gps.time.hour()) + ":" +
+        GPS_TIME = std::to_string(gps.time.hour()) + ":" +
         std::to_string(gps.time.minute())+ ":" +
         std::to_string(gps.time.second());
       }
       else{
-        std::string GPS_TIME= "?";
+        GPS_TIME= "?";
       }
       std::string GPS_SATS= gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
       //print
@@ -273,12 +261,10 @@ CollectiveSensorData Sattalite::GatherSensorData()
   data.PC_DEPLOYED= std::to_string(pc_deployed);
   data.VOLTAGE="9.0"; //?
 
-  double* bmp_res= getTempPressure();//if bmp fine
-  if(bmp_res[0] == -1 || bmp_res[1] == -1);
-    //error code
-  data.TEMPERATURE=std::to_string(bmp_res[0]); 
-  data.PRESSURE=std::to_string(bmp_res[1]); 
-  delete bmp_res;
+  data.TEMPERATURE=std::to_string(bmp.readTemperature()); 
+  // Calculate altitude assuming 'standard' barometric(!!!!!)
+  // pressure of 1013.25 millibar = 101325 Pascal
+  data.PRESSURE=std::to_string(bmp.readAltitude()); 
 
   data.TILT_X=tilt_xyz[0]; 
   data.TILT_Y=tilt_xyz[1]; 
@@ -361,41 +347,6 @@ void displayGPSInfo(TinyGPSPlus &gps){
   }
 
   Serial.println();
-}
-
-double* Sattalite::getTempPressure()
-{
-  double* result = new double[2]{-1, -1};
-  //check error flags?
-  if (!bmp180.measureTemperature())
-	{
-		Serial.println("could not start temperature measurement, is a measurement already running?");
-		return result;
-	}
-
-	//wait for the measurement to finish. proceed as soon as hasValue() returned true. 
-	do
-	{
-		delay(100);
-	} while (!bmp180.hasValue());
-
-	result[0] = bmp180.getTemperature(); 
-
-	//start a pressure measurement. pressure measurements depend on temperature measurement, you should only start a pressure 
-	//measurement immediately after a temperature measurement. 
-	if (!bmp180.measurePressure())
-	{
-		return result;
-	}
-
-	//wait for the measurement to finish. proceed as soon as hasValue() returned true. 
-	do
-	{
-		delay(100);
-	} while (!bmp180.hasValue());
-
-	result[1] = bmp180.getPressure();
-  return result;
 }
 
 State Sattalite::getState(){

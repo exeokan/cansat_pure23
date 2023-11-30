@@ -1,15 +1,16 @@
 #pragma once
 
-#include "SDCard.h"
 #include <Arduino.h>
 #include <Wire.h>
-#include <BMP180I2C.h>
+#include <Adafruit_BMP085.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <TinyGPSPlus.h>
 #include <string>
 #include <QMC5883LCompass.h>
 #include <sstream>
+
+#include "SDCard.h"
 #include "SattaliteErrLights.h"
 
 const int GPS_RX_Pin = 26,  GPS_TX_Pin = 25;
@@ -36,7 +37,7 @@ class Sattalite
 {
 private:
     SDCard sdCard;
-    BMP180I2C bmp180;
+    Adafruit_BMP085 bmp;
     Adafruit_MPU6050 mpu;
     TinyGPSPlus gps;
     QMC5883LCompass compass;
@@ -56,11 +57,10 @@ public:
     void BMP180Test();
     void MPUTest();
     void GPSTest();
-    void fedGPSTest()
+    void fedGPSTest();
     void QMCTest();
     //make some const if you can
     
-    double* getTempPressure(); 
     bool detectTakeOff();
     bool missionFinished();
     bool isLanded();

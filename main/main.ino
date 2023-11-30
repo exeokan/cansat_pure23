@@ -14,13 +14,14 @@ void setup(){
 //TODO:
 // error/status lights
 // calculating tilt
-// implement bmp180 using the adafruit bmp085 library
 // test esp cam
+//feed gps in loop
 long lastTime = millis();
-const int feedingRate = 100; // in ms
+const int feedingRate = 100; // in feed/ms
 
 void loop(){
-    cansat->calculateTilt();
+    //cansat->calculateTilt();
+    cansat->BMP180Test();
     /*
     if(millis()-lastTime > feedingRate){
         cansat->calculateTilt();
