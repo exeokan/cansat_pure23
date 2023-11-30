@@ -123,7 +123,35 @@ void Sattalite::GPSTest()
     //error code
   }
 }
+void Sattalite::fedGPSTest(){
+      std::string GPS_ALTITUDE= gps.altitude.isValid() ? std::to_string(gps.altitude.meters()):  "?"; 
+      std::string GPS_LONGITUDE= gps.location.isValid() ? std::to_string(gps.location.lng()) : "?"; 
+      std::string GPS_LATITUDE= gps.location.isValid() ? std::to_string(gps.location.lat()) : "?"; 
+      if(gps.time.isValid()){
+        std::string GPS_TIME = std::to_string(gps.time.hour()) + ":" +
+        std::to_string(gps.time.minute())+ ":" +
+        std::to_string(gps.time.second());
+      }
+      else{
+        std::string GPS_TIME= "?";
+      }
+      std::string GPS_SATS= gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
+      //print
+      Serial.print("Altitude: ");
+      Serial.println(GPS_ALTITUDE.c_str());
 
+      Serial.print("Longitude: ");
+      Serial.println(GPS_LONGITUDE.c_str());
+
+      Serial.print("Latitude: ");
+      Serial.println(GPS_LATITUDE.c_str());
+
+      Serial.print("Time: ");
+      Serial.println(GPS_TIME.c_str());
+
+      Serial.print("Satellites: ");
+      Serial.println(GPS_SATS.c_str());
+}
 bool Sattalite::missionFinished()
 {
   return false;
@@ -172,9 +200,13 @@ void Sattalite::calculateTilt()
 
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-
+  
   double timeDif= (millis()-lastTime)/1000.0; // in seconds
-
+  Serial.println(timeDif);
+  Serial.println(g.gyro.x);
+  Serial.println(g.gyro.y);
+  Serial.println(g.gyro.z);
+  Serial.println("--------------");
   tilt_xyz[0] += g.gyro.x * timeDif;
   tilt_xyz[1] += g.gyro.y * timeDif;
   tilt_xyz[2] += g.gyro.z * timeDif;

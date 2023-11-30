@@ -17,9 +17,10 @@ bool SattaliteErrLights::isOkay(const Modules &module) {
 }
 SattaliteErrLights::SattaliteErrLights(/* args */)
 {
+  /*
     pinMode(bmp, OUTPUT);
     pinMode(mpu, OUTPUT);
     pinMode(qmc, OUTPUT);
     pinMode(gps, OUTPUT);
-    pinMode(cam, OUTPUT);
+    pinMode(cam, OUTPUT);*/
 }

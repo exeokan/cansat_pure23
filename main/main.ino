@@ -2,11 +2,11 @@
 Sattalite* cansat;
 void setup(){
     Serial.begin(115200);
+    Serial.println("Program begins...");
     cansat = new Sattalite(std::to_string(rand()%1000)); //problematic? memory leak?
     cansat->SDCardTest();
     cansat->BMP180Test();
     cansat->MPUTest();
-    cansat->GPSTest();
     cansat->QMCTest();
     //cansat->establishGC_Communincation();
 }
@@ -15,11 +15,12 @@ void setup(){
 // error/status lights
 // calculating tilt
 // implement bmp180 using the adafruit bmp085 library
-
+// test esp cam
 long lastTime = millis();
 const int feedingRate = 100; // in ms
 
 void loop(){
+    cansat->calculateTilt();
     /*
     if(millis()-lastTime > feedingRate){
         cansat->calculateTilt();

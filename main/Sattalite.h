@@ -46,15 +46,17 @@ private:
     long missionStartTime;
     State state = State::standby;
     bool pc_deployed=false;
-    double tilt_xyz[3]={0, 0, 0};
+    
     SattaliteErrLights errLights;
 public:
     Sattalite(std::string);
+    double tilt_xyz[3]={0, 0, 0}; //!
     //test methods
     void SDCardTest();
     void BMP180Test();
     void MPUTest();
     void GPSTest();
+    void fedGPSTest()
     void QMCTest();
     //make some const if you can
     
