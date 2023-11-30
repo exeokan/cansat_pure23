@@ -181,6 +181,24 @@ void Sattalite::activateCAM()
 {
   Serial1.write("BEGIN");
 }
+void Sattalite::sendDataToGC(CollectiveSensorData){}
+
+void Sattalite::feedGPS()
+{
+  while (Serial2.available())
+    gps.encode(Serial2.read());
+
+  if (gps.charsProcessed() < 10)
+  {
+    Serial.println(F("No GPS detected: check wiring."));
+    //error code
+  }
+  else{
+    //remove error
+  }
+
+}
+
 void Sattalite::calculateTilt()
 {
   //if mpu is fine->
@@ -217,50 +235,23 @@ CollectiveSensorData Sattalite::GatherSensorData()
   data.PACKET_COUNT=n_packetsSent; n_packetsSent++;
   data.MODE="FLIGHT";
   data.STATE = state_names[state];
-
-  long gps_begin= millis();
   //gps data
-  //try two times?
-  bool successfulRead = false;
-  for (int i = 0; i < 2; i++)
-  {
-    while (Serial2.available() > 0) {
-      if (gps.encode(Serial2.read())){
-        successfulRead = true;
-        data.GPS_ALTITUDE= gps.altitude.isValid() ? std::to_string(gps.altitude.meters()):  "?"; 
-        data.GPS_LONGITUDE= gps.location.isValid() ? std::to_string(gps.location.lng()) : "?"; 
-        data.GPS_LATITUDE= gps.location.isValid() ? std::to_string(gps.location.lat()) : "?"; 
-        if(gps.time.isValid()){
-          data.GPS_TIME = std::to_string(gps.time.hour()) + ":" +
-          std::to_string(gps.time.minute())+ ":" +
-          std::to_string(gps.time.second());
-        }
-        else{
-          data.GPS_TIME= "?";
-        }
-        data.GPS_SATS= gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
-      }
-    }
-    if(successfulRead)
-      break;
-    delay(100);
-  }
-  if(!successfulRead){
-    data.GPS_ALTITUDE, data.GPS_LONGITUDE, data.GPS_LATITUDE, data.GPS_TIME, data.GPS_SATS= "NaN";
-  }   
-  if (gps.charsProcessed() < 10)
-  {
-    Serial.println(F("No GPS detected: check wiring."));
-    //error code
-    
+  data.GPS_ALTITUDE= gps.altitude.isValid() ? std::to_string(gps.altitude.meters()):  "?"; 
+  data.GPS_LONGITUDE= gps.location.isValid() ? std::to_string(gps.location.lng()) : "?"; 
+  data.GPS_LATITUDE= gps.location.isValid() ? std::to_string(gps.location.lat()) : "?"; 
+  if(gps.time.isValid()){
+    data.GPS_TIME = std::to_string(gps.time.hour()) + ":" +
+    std::to_string(gps.time.minute())+ ":" +
+    std::to_string(gps.time.second());
   }
   else{
-    //remove error
+    data.GPS_TIME= "?";
   }
+  data.GPS_SATS= gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
 
   data.PC_DEPLOYED= std::to_string(pc_deployed);
   data.VOLTAGE="9.0"; //?
-
+  //bmp data
   data.TEMPERATURE=std::to_string(bmp.readTemperature()); 
   // Calculate altitude assuming 'standard' barometric(!!!!!)
   // pressure of 1013.25 millibar = 101325 Pascal

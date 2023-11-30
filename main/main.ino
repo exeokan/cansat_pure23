@@ -16,17 +16,22 @@ void setup(){
 // calculating tilt
 // test esp cam
 //feed gps in loop
-long lastTime = millis();
+long lastFeed = millis();
+long lastDisplay = millis();
 const int feedingRate = 100; // in feed/ms
-
+const int displayRate = 1000; // in feed/ms
 void loop(){
     //cansat->calculateTilt();
-    cansat->BMP180Test();
-    /*
-    if(millis()-lastTime > feedingRate){
-        cansat->calculateTilt();
-        //cansat->feedGPS() //Gather sensorda yapmayı iptal et
+    
+    if(millis()-lastFeed > feedingRate){
+        cansat->feedGPS(); //Gather sensorda yapmayı iptal et
+        lastFeed=millis();
     }
+    if(millis()-lastDisplay > displayRate){
+        cansat->fedGPSTest(); //Gather sensorda yapmayı iptal et
+        lastDisplay=millis();
+    }
+    /*
     //bunu bmp için de yap? yeni kütüpe bağlı
     delay(100);
     State currentState= cansat->getState();

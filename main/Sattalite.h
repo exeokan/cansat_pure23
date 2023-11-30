@@ -66,7 +66,7 @@ public:
     bool isLanded();
     CollectiveSensorData GatherSensorData();
     void logToSD(CollectiveSensorData);
-
+    void feedGPS();
     void activateCAM();
     void establishGC_Communincation();
     void sendDataToGC(CollectiveSensorData); 
