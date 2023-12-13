@@ -11,10 +11,13 @@ void setup(){
     int random=esp_random() % 10000;
     bootloader_random_disable();
     cansat = new Sattalite(std::to_string(random)); //problematic? memory leak?
-    cansat->SDCardTest();
-    cansat->BMP180Test();
-    cansat->MPUTest();
-    cansat->QMCTest();
+    /*
+        cansat->SDCardTest();
+        cansat->BMP180Test();
+        cansat->MPUTest();
+        cansat->QMCTest();
+    */
+    cansat->activateCAM();
     //cansat->establishGC_Communincation();
 }
 
@@ -22,7 +25,9 @@ void setup(){
 // error/status lights
 // calculating tilt
 // test esp cam
-//feed gps in loop
+// feed gps in loop[done]
+// python code for interpretation and graphing
+
 long lastFeed = millis();
 long lastDisplay = millis();
 const int feedingRate = 100; // in feed/ms

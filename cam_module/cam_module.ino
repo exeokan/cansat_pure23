@@ -9,6 +9,7 @@
 #include "soc/soc.h"           // Disable brownout problems
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
 #include "driver/rtc_io.h"
+#include <string>
 
 // Pin definition for CAMERA_MODEL_AI_THINKER
 // Change pin definition if you're using another ESP32 with camera module
@@ -29,17 +30,26 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
+//for serial with esp32
+#define RXD1 14
+#define TXD1 15
+
 // Keep track of number of pictures
 unsigned int pictureNumber = 0;
-int signalInput=15;
+bool captureBegun=false;
 //Stores the camera configuration parameters
 camera_config_t config;
+
+std::string beginWord="BEGIN";
+int serial_count=0;
 
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
  
   Serial.begin(115200);
-  
+  //for serial with esp32
+  Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);
+
   //Initialize the camera  
   Serial.print("Initializing the camera module...");
   configInitCamera();
@@ -48,28 +58,39 @@ void setup() {
   //Initialize MicroSD
   Serial.print("Initializing the MicroSD card module... ");
   initMicroSDCard();
-  pinMode(signalInput, INPUT);
-  pinMode(33, OUTPUT);
 }
 
 void loop() {
   //Path where new picture will be saved in SD Card
-  String path = "/picture" + String(pictureNumber) +".jpg";  
-  //Serial.printf("Picture file name: %s\n", path.c_str());
+  if(captureBegun){
+    String path = "/picture" + String(pictureNumber) +".jpg";  
+    Serial.printf("Picture file name: %s\n", path.c_str());
 
-  //Take and Save Photo
-  if(digitalRead(signalInput)==LOW){
-      takeSavePhoto(path);
-      pictureNumber++;
-      digitalWrite(33, LOW);
-      Serial.printf("Picture file name: %s\n", path.c_str());
+    //Take and Save Photo
+    takeSavePhoto(path);
+    pictureNumber++;
   }
-  else 
-  {
-    Serial.println(digitalRead(signalInput));
-    digitalWrite(33, HIGH);
-  } 
-    
+  else{
+    if(!Serial1){
+      Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);
+    }
+    while (Serial1.available()) {
+      char inByte = Serial1.read();
+      if(inByte == beginWord[serial_count]){
+        Serial.println(serial_count);
+        Serial.println(inByte);
+        serial_count++;
+        if(serial_count==5){
+          Serial.println("Capturing now!");
+          captureBegun=true;
+          break;
+        }
+      }
+      else{
+        serial_count = 0; 
+      }
+    }
+  }
   delay(30); 
 }
 

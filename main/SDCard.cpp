@@ -8,10 +8,11 @@ SDCard::SDCard(/* args */)
     }
     if(!SD.begin()){
         working=false;
-        Serial.println("Card Mount Failed");
+        Serial.println("SDCard Mount Failed");
         return;
     }
     else{
+        Serial.println("SDCard found!");
         working=true;
     }
 }
