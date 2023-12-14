@@ -163,6 +163,14 @@ State Sattalite::getState(){
   return state;
 }
 
+void Sattalite::listenFromCam()
+{
+  while(Serial1.available()){
+    int inByte = Serial1.read();
+    Serial.write(inByte);
+  }
+}
+
 bool Sattalite::missionFinished()
 {
   return false;

@@ -34,6 +34,8 @@ const int feedingRate = 100; // in feed/ms
 const int displayRate = 900; // in feed/ms
 void loop(){
     //cansat->calculateTilt();
+    cansat->listenFromCam();
+    /*
     if(millis()-lastFeed > feedingRate){
         cansat->feedGPS(); //Gather sensorda yapmayı iptal et
         lastFeed=millis();
@@ -42,7 +44,7 @@ void loop(){
         cansat->logToSD(cansat->GatherSensorData());
         Serial.println("----------------------------");
         lastDisplay=millis();
-    }
+    }*/
     /*
     //bunu bmp için de yap? yeni kütüpe bağlı
     delay(100);

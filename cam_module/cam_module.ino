@@ -30,10 +30,6 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-//for serial with esp32
-#define RXD1 14
-#define TXD1 15
-
 // Keep track of number of pictures
 unsigned int pictureNumber = 0;
 bool captureBegun=false;
@@ -42,13 +38,12 @@ camera_config_t config;
 
 std::string beginWord="BEGIN";
 int serial_count=0;
-
+//yesil rx->3
+//mavi tx->1
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
- 
-  Serial.begin(115200);
   //for serial with esp32
-  Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);
+  Serial.begin(115200);
 
   //Initialize the camera  
   Serial.print("Initializing the camera module...");
@@ -71,13 +66,12 @@ void loop() {
     pictureNumber++;
   }
   else{
-    if(!Serial1){
-      Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);
+    if(!Serial){
+      Serial.begin(115200);
     }
-    while (Serial1.available()) {
-      char inByte = Serial1.read();
+    while (Serial.available()) {
+      char inByte = Serial.read();
       if(inByte == beginWord[serial_count]){
-        Serial.println(serial_count);
         Serial.println(inByte);
         serial_count++;
         if(serial_count==5){

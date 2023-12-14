@@ -77,6 +77,7 @@ public:
 
     void calculateTilt();
     State getState();
+    void listenFromCam();
 };
 /*
 static void smartDelay(unsigned long ms)
