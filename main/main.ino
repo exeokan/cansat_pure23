@@ -12,19 +12,16 @@ void setup(){
     bootloader_random_disable();
     cansat = new Sattalite(std::to_string(random)); //problematic? memory leak?
     /*
-        cansat->SDCardTest();
-        cansat->BMP180Test();
-        cansat->MPUTest();
-        cansat->QMCTest();
-    */
+    cansat->SDCardTest();
+    cansat->BMP180Test();
+    cansat->MPUTest();
+    cansat->QMCTest();
+    pinMode(4, OUTPUT);*/
     cansat->activateCAM();
-    //cansat->establishGC_Communincation();
 }
 
 //TODO:
-// error/status lights
 // calculating tilt
-// test esp cam
 // feed gps in loop[done]
 // python code for interpretation and graphing
 
@@ -34,17 +31,18 @@ const int feedingRate = 100; // in feed/ms
 const int displayRate = 900; // in feed/ms
 void loop(){
     //cansat->calculateTilt();
-    cansat->listenFromCam();
-    /*
+    //cansat->listenFromCam();    
     if(millis()-lastFeed > feedingRate){
         cansat->feedGPS(); //Gather sensorda yapmayı iptal et
         lastFeed=millis();
     }
     if(millis()-lastDisplay > displayRate){
-        cansat->logToSD(cansat->GatherSensorData());
+        CollectiveSensorData sensorData = cansat->GatherSensorData();
+        cansat->logToSD(sensorData);
+        cansat->sendDataToGC(sensorData);
         Serial.println("----------------------------");
         lastDisplay=millis();
-    }*/
+    }
     /*
     //bunu bmp için de yap? yeni kütüpe bağlı
     delay(100);

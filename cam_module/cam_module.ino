@@ -58,9 +58,10 @@ void setup() {
 void loop() {
   //Path where new picture will be saved in SD Card
   if(captureBegun){
-    String path = "/picture" + String(pictureNumber) +".jpg";  
-    Serial.printf("Picture file name: %s\n", path.c_str());
+    String path = "/picture" + String(pictureNumber) +".jpg";//add folder missionid  
+    //Serial.printf("Picture file name: %s\n", path.c_str());
 
+    //
     //Take and Save Photo
     takeSavePhoto(path);
     pictureNumber++;
@@ -182,7 +183,7 @@ void takeSavePhoto(String path){
   } 
   else {
     file.write(fb->buf, fb->len); // payload (image), payload length
-    Serial.printf("Saved file to path: %s\n", path.c_str());
+    //Serial.printf("Saved file to path: %s\n", path.c_str());
   }
   file.close();
   

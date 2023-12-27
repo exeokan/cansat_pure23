@@ -125,7 +125,7 @@ CollectiveSensorData Sattalite::GatherSensorData()
   return data;
 }
 
-void Sattalite::logToSD(CollectiveSensorData data)
+void Sattalite::logToSD(const CollectiveSensorData& data)
 {
   std::ostringstream oss;
     oss << "{"
@@ -152,10 +152,9 @@ void Sattalite::logToSD(CollectiveSensorData data)
         << "\"MAG_Z\":\"" << data.MAG_Z << "\""
         << "}\n";
   std::string str=oss.str();
-  Serial.println( str.substr(0,150).c_str() );
-  Serial.println( str.substr(150).c_str() );
-  Serial.print("Length:"); Serial.println(str.length());
-
+  //Serial.println( str.substr(0,150).c_str() );
+  //Serial.println( str.substr(150).c_str() );
+  //Serial.print("Length:"); Serial.println(str.length());
   sdCard.appendFile(fileName.c_str(), oss.str().c_str());
 }
 
@@ -176,9 +175,13 @@ bool Sattalite::missionFinished()
   return false;
 }
 
-
 void Sattalite::activateCAM()
 {
   Serial1.write("BEGIN");
 }
-void Sattalite::sendDataToGC(CollectiveSensorData){}
+void Sattalite::sendDataToGC(const CollectiveSensorData& sensorData){
+  satComm.sendData(sensorData);
+  /*Command deneme;
+  deneme.command="aa";
+  satComm.sendData(deneme);*/
+}

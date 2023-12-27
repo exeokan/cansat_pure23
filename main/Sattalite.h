@@ -10,23 +10,15 @@
 #include <QMC5883LCompass.h>
 #include <sstream>
 
+#include "SatComm.h"
 #include "SDCard.h"
-#include "SattaliteErrLights.h"
 
 
-const int GPS_RX_Pin = 26,  GPS_TX_Pin = 25;
-const uint32_t GPSBaud = 9600;
+const uint32_t GPSBaud = 4800;
 const byte BMP180_12C_Address= 0x77;
 const int RXD1=14;
 const int TXD1=15;
 
-struct CollectiveSensorData
-{
-    std::string TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
-    ALTITUDE, PC_DEPLOYED, TEMPERATURE, VOLTAGE, PRESSURE, GPS_TIME,
-    GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE,
-    GPS_SATS, ACC_X, ACC_Y, ACC_Z, MAG_X, MAG_Y, MAG_Z, TILT_X, TILT_Y, CMD_ECHO;
-};
 enum State{
     standby = 0, 
     ascent = 1,
@@ -51,7 +43,7 @@ private:
     State state = State::standby;
     bool pc_deployed=false;
     std::string fileName;
-    SattaliteErrLights errLights;
+    SatComm satComm;
 public:
     Sattalite(std::string);
     double tilt_xyz[3]={0, 0, 0}; //!
@@ -68,12 +60,11 @@ public:
     bool missionFinished();
     bool isLanded();
     CollectiveSensorData GatherSensorData();
-    void logToSD(CollectiveSensorData);
+    void logToSD(const CollectiveSensorData&);
     void feedGPS();
+
     void activateCAM();
-    void establishGC_Communincation();
-    void sendDataToGC(CollectiveSensorData); 
-    void sendCommandToGC();
+    void sendDataToGC(const CollectiveSensorData&); 
 
     void calculateTilt();
     State getState();
