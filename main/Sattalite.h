@@ -15,7 +15,7 @@
 
 struct CollectiveSensorData
 {
-    std::string TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
+    std::string MISSION_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
     ALTITUDE, PC_DEPLOYED, TEMPERATURE, VOLTAGE, PRESSURE, GPS_TIME,
     GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE,
     GPS_SATS, ACC_X, ACC_Y, ACC_Z, MAG_X, MAG_Y, MAG_Z, TILT_X, TILT_Y, CMD_ECHO;
@@ -33,6 +33,7 @@ enum State{
     landed = 3
 };
 extern std::string state_names[];
+
 class Sattalite
 {
 private:
@@ -40,17 +41,19 @@ private:
     Adafruit_BMP085 bmp;
     Adafruit_MPU6050 mpu;
     Adafruit_Sensor *mpu_accel, *mpu_gyro;
-
     TinyGPSPlus gps;
     QMC5883LCompass compass;
+
+    SatComm satComm;
 
     int n_packetsSent=0;
     std::string missionID;
     long missionStartTime;
     State state = State::standby;
     bool pc_deployed=false;
+
     std::string fileName;
-    SatComm satComm;
+
 public:
     Sattalite(std::string);
     double tilt_xyz[3]={0, 0, 0}; //!

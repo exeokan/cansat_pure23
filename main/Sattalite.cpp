@@ -7,7 +7,7 @@ std::string concatenateSensorData(const CollectiveSensorData& data)
 {
     std::stringstream ss;
     
-    ss << data.TEAM_ID << "," << data.MISSION_TIME << "," << data.PACKET_COUNT << "," << data.MODE << ","
+    ss << data.MISSION_ID << "," << data.MISSION_TIME << "," << data.PACKET_COUNT << "," << data.MODE << ","
        << data.STATE << "," << data.ALTITUDE << "," << data.PC_DEPLOYED << "," << data.TEMPERATURE << ","
        << data.VOLTAGE << "," << data.PRESSURE << "," << data.GPS_TIME << "," << data.GPS_ALTITUDE << ","
        << data.GPS_LATITUDE << "," << data.GPS_LONGITUDE << "," << data.GPS_SATS << "," << data.ACC_X << ","
@@ -90,7 +90,7 @@ CollectiveSensorData Sattalite::GatherSensorData()
 {
   CollectiveSensorData data;
 
-  data.TEAM_ID = "5655";
+  data.MISSION_ID = missionID;
   data.MISSION_TIME= std::to_string((millis()-missionStartTime)/1000.0); //seconds
   data.PACKET_COUNT= std::to_string(n_packetsSent); n_packetsSent++;
   data.MODE="FLIGHT";
@@ -142,7 +142,7 @@ void Sattalite::logToSD(const CollectiveSensorData& data)
 {
   std::ostringstream oss;
     oss << "{"
-        << "\"TEAM_ID\":\"" << data.TEAM_ID << "\","
+        << "\"MISSION_ID\":\"" << data.MISSION_ID << "\","
         << "\"MISSION_TIME\":\"" << data.MISSION_TIME << "\","
         << "\"PACKET_COUNT\":\"" << data.PACKET_COUNT << "\","
         << "\"MODE\":\"" << data.MODE << "\","
@@ -165,9 +165,6 @@ void Sattalite::logToSD(const CollectiveSensorData& data)
         << "\"MAG_Z\":\"" << data.MAG_Z << "\""
         << "}\n";
   std::string str=oss.str();
-  //Serial.println( str.substr(0,150).c_str() );
-  //Serial.println( str.substr(150).c_str() );
-  //Serial.print("Length:"); Serial.println(str.length());
   sdCard.appendFile(fileName.c_str(), oss.str().c_str());
 }
 

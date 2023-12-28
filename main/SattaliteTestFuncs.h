@@ -88,6 +88,9 @@ void Sattalite::fedGPSTest(){
       }
       std::string GPS_SATS= gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
       //print
+      Serial.print("Chars processed: ");
+      Serial.println(gps.charsProcessed());
+
       Serial.print("Altitude: ");
       Serial.println(GPS_ALTITUDE.c_str());
 
