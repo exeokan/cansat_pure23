@@ -13,6 +13,13 @@
 #include "SatComm.h"
 #include "SDCard.h"
 
+struct CollectiveSensorData
+{
+    std::string TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
+    ALTITUDE, PC_DEPLOYED, TEMPERATURE, VOLTAGE, PRESSURE, GPS_TIME,
+    GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE,
+    GPS_SATS, ACC_X, ACC_Y, ACC_Z, MAG_X, MAG_Y, MAG_Z, TILT_X, TILT_Y, CMD_ECHO;
+};
 
 const uint32_t GPSBaud = 4800;
 const byte BMP180_12C_Address= 0x77;
@@ -70,13 +77,3 @@ public:
     State getState();
     void listenFromCam();
 };
-/*
-static void smartDelay(unsigned long ms)
-{
-  unsigned long start = millis();
-  do 
-  {
-    while (ss.available())
-      gps.encode(ss.read());
-  } while (millis() - start < ms);
-}*/

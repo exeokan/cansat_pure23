@@ -34,6 +34,7 @@ void loop(){
     //cansat->listenFromCam();    
     if(millis()-lastFeed > feedingRate){
         cansat->feedGPS(); //Gather sensorda yapmayı iptal et
+        cansat->fedGPSTest();
         lastFeed=millis();
     }
     if(millis()-lastDisplay > displayRate){

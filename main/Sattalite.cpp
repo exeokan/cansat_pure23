@@ -3,6 +3,19 @@
 
 std::string state_names[]={"STANDBY", "ASCENT", "DESCENT", "LANDED"};
 
+std::string concatenateSensorData(const CollectiveSensorData& data)
+{
+    std::stringstream ss;
+    
+    ss << data.TEAM_ID << "," << data.MISSION_TIME << "," << data.PACKET_COUNT << "," << data.MODE << ","
+       << data.STATE << "," << data.ALTITUDE << "," << data.PC_DEPLOYED << "," << data.TEMPERATURE << ","
+       << data.VOLTAGE << "," << data.PRESSURE << "," << data.GPS_TIME << "," << data.GPS_ALTITUDE << ","
+       << data.GPS_LATITUDE << "," << data.GPS_LONGITUDE << "," << data.GPS_SATS << "," << data.ACC_X << ","
+       << data.ACC_Y << "," << data.ACC_Z << "," << data.MAG_X << "," << data.MAG_Y << "," << data.MAG_Z << ","
+       << data.TILT_X << "," << data.TILT_Y << "," << data.CMD_ECHO;
+
+    return ss.str();
+}
 Sattalite::Sattalite(std::string missionID): missionID(missionID)
   , missionStartTime(millis())
 {
@@ -180,8 +193,9 @@ void Sattalite::activateCAM()
   Serial1.write("BEGIN");
 }
 void Sattalite::sendDataToGC(const CollectiveSensorData& sensorData){
-  satComm.sendData(sensorData);
-  /*Command deneme;
-  deneme.command="aa";
-  satComm.sendData(deneme);*/
+  Packet packet;
+  std::string concatenatedSensorData= concatenateSensorData(sensorData);
+  Serial.println(concatenatedSensorData.c_str());
+  strcpy(packet.str, concatenatedSensorData.c_str());
+  satComm.sendData(packet);
 }
