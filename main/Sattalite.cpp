@@ -1,89 +1,82 @@
 #include "Sattalite.h"
 #include "SattaliteTestFuncs.h"
 
-std::string state_names[]={"STANDBY", "ASCENT", "DESCENT", "LANDED"};
+std::string state_names[] = {"STANDBY", "ASCENT", "DESCENT", "LANDED"};
 
-std::string concatenateSensorData(const CollectiveSensorData& data)
+std::string concatenateSensorData(const CollectiveSensorData &data)
 {
-    std::stringstream ss;
-    
-    ss << data.MISSION_ID << "," << data.MISSION_TIME << "," << data.PACKET_COUNT << "," << data.MODE << ","
-       << data.STATE << "," << data.ALTITUDE << "," << data.PC_DEPLOYED << "," << data.TEMPERATURE << ","
-       << data.VOLTAGE << "," << data.PRESSURE << "," << data.GPS_TIME << "," << data.GPS_ALTITUDE << ","
-       << data.GPS_LATITUDE << "," << data.GPS_LONGITUDE << "," << data.GPS_SATS << "," << data.ACC_X << ","
-       << data.ACC_Y << "," << data.ACC_Z << "," << data.MAG_X << "," << data.MAG_Y << "," << data.MAG_Z << ","
-       << data.TILT_X << "," << data.TILT_Y << "," << data.CMD_ECHO;
+  std::stringstream ss;
 
-    return ss.str();
+  ss << data.MISSION_ID << "," << data.MISSION_TIME << "," << data.PACKET_COUNT << "," << data.MODE << ","
+     << data.STATE << "," << data.ALTITUDE << "," << data.PC_DEPLOYED << "," << data.TEMPERATURE << ","
+     << data.PRESSURE << "," << data.GPS_TIME << "," << data.GPS_ALTITUDE << ","
+     << data.GPS_LATITUDE << "," << data.GPS_LONGITUDE << "," << data.GPS_SATS << "," << data.ACC_X << ","
+     << data.ACC_Y << "," << data.ACC_Z << "," << data.MAG_X << "," << data.MAG_Y << "," << data.MAG_Z << ","
+     << data.CMD_ECHO;
+
+  return ss.str();
 }
-Sattalite::Sattalite(std::string missionID): missionID(missionID)
-  , missionStartTime(millis())
+Sattalite::Sattalite(std::string missionID) : missionID(missionID), missionStartTime(millis()),
+  satComm(std::bind(&Sattalite::CommandRecieved, this, std::placeholders::_1))
 {
-    if(!Serial){
-        Serial.begin(115200); //when usb is disconnected?
-    }
-    /*BMP180 init*/
-    Wire.begin();
-    if (!bmp.begin())
-    {
-      Serial.println("begin() failed. check your BMP180 Interface and I2C Address.");
-      //error code
-    }
-    else
-    {
-      Serial.println("BMP180 Found!");
-    }
-    
-    /*MPU6050 init*/
-    if (!mpu.begin()) {
-      Serial.println("Failed to find MPU6050 chip");
-    }
-    else{
-      Serial.println("MPU6050 Found!");
-      mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-      mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-      mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+  if (!Serial)
+  {
+    Serial.begin(115200); // when usb is disconnected?
+  }
+  /*BMP180 init*/
+  Wire.begin();
+  if (!bmp.begin())
+  {
+    Serial.println("begin() failed. check your BMP180 Interface and I2C Address.");
+    // error code
+  }
+  else
+  {
+    Serial.println("BMP180 Found!");
+  }
 
-      mpu_accel = mpu.getAccelerometerSensor();
-      mpu_gyro = mpu.getGyroSensor();    
-    }
-    /*GPS init*/
-    Serial2.begin(GPSBaud);
-    /*QMC Init*/
-    compass.init();
-    /*Serial for espcam comm*/
-    Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);  
-    fileName= "/record" + missionID + ".txt";
+  /*MPU6050 init*/
+  if (!mpu.begin())
+  {
+    Serial.println("Failed to find MPU6050 chip");
+  }
+  else
+  {
+    Serial.println("MPU6050 Found!");
+    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+    mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+    mpu_accel = mpu.getAccelerometerSensor();
+    mpu_gyro = mpu.getGyroSensor();
+  }
+  /*GPS init*/
+  Serial2.begin(GPSBaud);
+  /*QMC Init*/
+  compass.init();
+  /*Serial for espcam comm*/
+  Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);
+  fileName = "/record" + missionID + ".txt";
+}
+
+void Sattalite::CommandRecieved(std::string command)
+{
+  if(command=="REL"){
+      State=State::descent;
+      //deploy parachute
+  }
 }
 
 void Sattalite::feedGPS()
 {
-  while (Serial2.available())
+  while (Serial2.available() > 0)
+  {
     gps.encode(Serial2.read());
-
+  }
   if (gps.charsProcessed() < 10)
   {
     Serial.println(F("No GPS detected: check wiring."));
-    //error code
   }
-  else{
-    //remove error
-  }
-}
-void Sattalite::calculateTilt()
-{
-  //if mpu is fine-> otw null pointer error will come!
-  static long lastTime = millis(); 
-  
-  sensors_event_t g;
-  mpu_gyro->getEvent(&g);
-
-  double timeDif= (millis()-lastTime)/1000.0; // in seconds
-  tilt_xyz[0] += g.gyro.x * timeDif;
-  tilt_xyz[1] += g.gyro.y * timeDif;
-  tilt_xyz[2] += g.gyro.z * timeDif;
-
-  lastTime= millis();
 }
 
 CollectiveSensorData Sattalite::GatherSensorData()
@@ -91,108 +84,114 @@ CollectiveSensorData Sattalite::GatherSensorData()
   CollectiveSensorData data;
 
   data.MISSION_ID = missionID;
-  data.MISSION_TIME= std::to_string((millis()-missionStartTime)/1000.0); //seconds
-  data.PACKET_COUNT= std::to_string(n_packetsSent); n_packetsSent++;
-  data.MODE="FLIGHT";
+  data.MISSION_TIME = std::to_string((millis() - missionStartTime) / 1000.0); // seconds
+  data.PACKET_COUNT = std::to_string(n_packetsSent);
+  n_packetsSent++;
+  data.MODE = "FLIGHT";
   data.STATE = state_names[state];
-  //gps data
-  data.GPS_ALTITUDE= gps.altitude.isValid() ? std::to_string(gps.altitude.meters()):  "?"; 
-  data.GPS_LONGITUDE= gps.location.isValid() ? std::to_string(gps.location.lng()) : "?"; 
-  data.GPS_LATITUDE= gps.location.isValid() ? std::to_string(gps.location.lat()) : "?"; 
-  if(gps.time.isValid()){
+  // gps data
+  data.GPS_ALTITUDE = gps.altitude.isValid() ? std::to_string(gps.altitude.meters()) : "?";
+  data.GPS_LONGITUDE = gps.location.isValid() ? std::to_string(gps.location.lng()) : "?";
+  data.GPS_LATITUDE = gps.location.isValid() ? std::to_string(gps.location.lat()) : "?";
+  if (gps.time.isValid())
+  {
     data.GPS_TIME = std::to_string(gps.time.hour()) + ":" +
-    std::to_string(gps.time.minute())+ ":" +
-    std::to_string(gps.time.second());
+                    std::to_string(gps.time.minute()) + ":" +
+                    std::to_string(gps.time.second());
   }
-  else{
-    data.GPS_TIME= "?";
+  else
+  {
+    data.GPS_TIME = "?";
   }
-  data.GPS_SATS= gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
-
-  data.PC_DEPLOYED= std::to_string(pc_deployed);
-  data.VOLTAGE="9.0"; //?
-  //bmp data
-  data.TEMPERATURE=std::to_string(bmp.readTemperature()); 
-  // Calculate altitude assuming 'standard' barometric(!!!!!)
-  // pressure of 1013.25 millibar = 101325 Pascal
-  data.PRESSURE=std::to_string(bmp.readPressure()); 
-  data.ALTITUDE=std::to_string(bmp.readAltitude()); 
-  //mpu
-  //if mpu is fine-> otw null pointer error will come!
+  data.GPS_SATS = gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
+  // parac deployed
+  data.PC_DEPLOYED = std::to_string(pc_deployed);
+  // bmp data
+  data.TEMPERATURE = std::to_string(bmp.readTemperature());
+  // Calculate altitude assuming 'standard' barometric(!!!!!) pressure of 1013.25 millibar = 101325 Pascal
+  data.PRESSURE = std::to_string(bmp.readPressure());
+  data.ALTITUDE = std::to_string(bmp.readAltitude());
+  // mpu
+  // if mpu is fine-> otw null pointer error will come!
   sensors_event_t accel;
   mpu_accel->getEvent(&accel);
 
   data.ACC_X = std::to_string(accel.acceleration.x);
   data.ACC_Y = std::to_string(accel.acceleration.y);
   data.ACC_Z = std::to_string(accel.acceleration.z);
-
-  data.TILT_X = std::to_string(tilt_xyz[0]); 
-  data.TILT_Y = std::to_string(tilt_xyz[1]); 
-  //qmc
+  // qmc
   compass.read();
   data.MAG_X = std::to_string(compass.getX());
   data.MAG_Y = std::to_string(compass.getY());
   data.MAG_Z = std::to_string(compass.getZ());
-  //cmd
-  data.CMD_ECHO="";
+  // cmd
+  data.CMD_ECHO = satComm.lastCommand;
   return data;
 }
 
-void Sattalite::logToSD(const CollectiveSensorData& data)
+// Log sensor data to the SD card
+void Sattalite::logToSD(const CollectiveSensorData &data)
 {
-  std::ostringstream oss;
-    oss << "{"
-        << "\"MISSION_ID\":\"" << data.MISSION_ID << "\","
-        << "\"MISSION_TIME\":\"" << data.MISSION_TIME << "\","
-        << "\"PACKET_COUNT\":\"" << data.PACKET_COUNT << "\","
-        << "\"MODE\":\"" << data.MODE << "\","
-        << "\"STATE\":\"" << data.STATE << "\","
-        << "\"ALTITUDE\":\"" << data.ALTITUDE << "\","
-        << "\"PC_DEPLOYED\":\"" << data.PC_DEPLOYED << "\","
-        << "\"TEMPERATURE\":\"" << data.TEMPERATURE << "\","
-        << "\"VOLTAGE\":\"" << data.VOLTAGE << "\","
-        << "\"PRESSURE\":\"" << data.PRESSURE << "\","
-        << "\"GPS_TIME\":\"" << data.GPS_TIME << "\","
-        << "\"GPS_ALTITUDE\":\"" << data.GPS_ALTITUDE << "\","
-        << "\"GPS_LATITUDE\":\"" << data.GPS_LATITUDE << "\","
-        << "\"GPS_LONGITUDE\":\"" << data.GPS_LONGITUDE << "\","
-        << "\"GPS_SATS\":\"" << data.GPS_SATS << "\","
-        << "\"ACC_X\":\"" << data.ACC_X << "\","
-        << "\"ACC_Y\":\"" << data.ACC_Y << "\","
-        << "\"ACC_Z\":\"" << data.ACC_Z << "\","
-        << "\"MAG_X\":\"" << data.MAG_X << "\","
-        << "\"MAG_Y\":\"" << data.MAG_Y << "\","
-        << "\"MAG_Z\":\"" << data.MAG_Z << "\""
-        << "}\n";
-  std::string str=oss.str();
-  sdCard.appendFile(fileName.c_str(), oss.str().c_str());
+  std::string str = concatenateSensorData(data);
+  sdCard.appendFile(fileName.c_str(), str.c_str());
 }
 
-State Sattalite::getState(){
+// Log string data to the SD card
+void Sattalite::logToSD(const std::string &str)
+{
+  sdCard.appendFile(fileName.c_str(), str.c_str());
+}
+
+// Handle telemetry by logging sensor data to the SD card and sending it to the ground control
+void Sattalite::handleTelemetry(const CollectiveSensorData& sensorData)
+{
+  std::string concatenatedSensorData = concatenateSensorData(sensorData);
+  logToSD(concatenatedSensorData);
+  sendDataToGC(concatenatedSensorData);
+}
+
+// Send telemetry data to the ground control
+void Sattalite::sendDataToGC(const std::string &concatenatedSensorData)
+{
+  Packet packet;
+  strcpy(packet.str, concatenatedSensorData.c_str());
+  satComm.sendDataToGC(packet);
+}
+
+// Send telemetry data to the ground control
+void Sattalite::sendDataToGC(const CollectiveSensorData &sensorData)
+{
+  Packet packet;
+  std::string concatenatedSensorData = concatenateSensorData(sensorData);
+  Serial.println(concatenatedSensorData.c_str());
+  strcpy(packet.str, concatenatedSensorData.c_str());
+  satComm.sendDataToGC(packet);
+}
+// Get the current state of the satellite
+State Sattalite::getState() const
+{
   return state;
 }
 
-void Sattalite::listenFromCam()
+// Listen for serial data from the camera module
+void Sattalite::listenFromCam() const
 {
-  while(Serial1.available()){
+  while (Serial1.available())
+  {
     int inByte = Serial1.read();
     Serial.write(inByte);
   }
 }
 
-bool Sattalite::missionFinished()
+// Check if the mission has finished
+bool Sattalite::missionFinished() const
 {
   return false;
 }
 
-void Sattalite::activateCAM()
+// Activate the camera module
+void Sattalite::activateCAM() const
 {
   Serial1.write("BEGIN");
 }
-void Sattalite::sendDataToGC(const CollectiveSensorData& sensorData){
-  Packet packet;
-  std::string concatenatedSensorData= concatenateSensorData(sensorData);
-  Serial.println(concatenatedSensorData.c_str());
-  strcpy(packet.str, concatenatedSensorData.c_str());
-  satComm.sendData(packet);
-}
+

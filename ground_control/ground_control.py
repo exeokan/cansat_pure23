@@ -16,7 +16,6 @@ class CollectiveSensorData:
         self.ALTITUDE = ""
         self.PC_DEPLOYED = ""
         self.TEMPERATURE = ""
-        self.VOLTAGE = ""
         self.PRESSURE = ""
         self.GPS_TIME = ""
         self.GPS_ALTITUDE = ""
@@ -29,8 +28,6 @@ class CollectiveSensorData:
         self.MAG_X = ""
         self.MAG_Y = ""
         self.MAG_Z = ""
-        self.TILT_X = ""
-        self.TILT_Y = ""
         self.CMD_ECHO = ""
 
 def convert_to_struct(concatenated_data):
@@ -49,22 +46,19 @@ def convert_to_struct(concatenated_data):
     sensor_data.ALTITUDE = data_list[5]
     sensor_data.PC_DEPLOYED = data_list[6]
     sensor_data.TEMPERATURE = data_list[7]
-    sensor_data.VOLTAGE = data_list[8]
-    sensor_data.PRESSURE = data_list[9]
-    sensor_data.GPS_TIME = data_list[10]
-    sensor_data.GPS_ALTITUDE = data_list[11]
-    sensor_data.GPS_LATITUDE = data_list[12]
-    sensor_data.GPS_LONGITUDE = data_list[13]
-    sensor_data.GPS_SATS = data_list[14]
-    sensor_data.ACC_X = data_list[15]
-    sensor_data.ACC_Y = data_list[16]
-    sensor_data.ACC_Z = data_list[17]
-    sensor_data.MAG_X = data_list[18]
-    sensor_data.MAG_Y = data_list[19]
-    sensor_data.MAG_Z = data_list[20]
-    sensor_data.TILT_X = data_list[21]
-    sensor_data.TILT_Y = data_list[22]
-    sensor_data.CMD_ECHO = data_list[23]
+    sensor_data.PRESSURE = data_list[8]
+    sensor_data.GPS_TIME = data_list[9]
+    sensor_data.GPS_ALTITUDE = data_list[10]
+    sensor_data.GPS_LATITUDE = data_list[11]
+    sensor_data.GPS_LONGITUDE = data_list[12]
+    sensor_data.GPS_SATS = data_list[13]
+    sensor_data.ACC_X = data_list[14]
+    sensor_data.ACC_Y = data_list[15]
+    sensor_data.ACC_Z = data_list[16]
+    sensor_data.MAG_X = data_list[17]
+    sensor_data.MAG_Y = data_list[18]
+    sensor_data.MAG_Z = data_list[19]
+    sensor_data.CMD_ECHO = data_list[20]
     return sensor_data
 
 def print_sensor_data(sensor_data):
@@ -76,7 +70,6 @@ def print_sensor_data(sensor_data):
     print("ALTITUDE:", sensor_data.ALTITUDE)
     print("PC_DEPLOYED:", sensor_data.PC_DEPLOYED)
     print("TEMPERATURE:", sensor_data.TEMPERATURE)
-    print("VOLTAGE:", sensor_data.VOLTAGE)
     print("PRESSURE:", sensor_data.PRESSURE)
     print("GPS_TIME:", sensor_data.GPS_TIME)
     print("GPS_ALTITUDE:", sensor_data.GPS_ALTITUDE)
@@ -89,8 +82,6 @@ def print_sensor_data(sensor_data):
     print("MAG_X:", sensor_data.MAG_X)
     print("MAG_Y:", sensor_data.MAG_Y)
     print("MAG_Z:", sensor_data.MAG_Z)
-    print("TILT_X:", sensor_data.TILT_X)
-    print("TILT_Y:", sensor_data.TILT_Y)
     print("CMD_ECHO:", sensor_data.CMD_ECHO)
     print("----------------------------------------\n")
 

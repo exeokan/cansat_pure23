@@ -2,8 +2,12 @@
 #include "SatComm.h"
 
 //E0:5A:1B:A0:C8:E8
-uint8_t broadcastAddress[] = {0xE0, 0x5A, 0x1B, 0xA0, 0xC8, 0xE8};
-esp_now_peer_info_t peerInfo;
+uint8_t broadcastAddress_GC[] = {0xE0, 0x5A, 0x1B, 0xA0, 0xC8, 0xE8};
+uint8_t broadcastAddress_Release[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+esp_now_peer_info_t peerInfo_GC;
+esp_now_peer_info_t peerInfo_Release;
+
 Packet packetBuffer;
 SatComm::SatComm() {
   // Set device as a Wi-Fi Station
@@ -20,16 +24,28 @@ SatComm::SatComm() {
   // get the status of Transmitted packet
   esp_now_register_send_cb(OnDataSent);
 
-  // Register peer
-  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-  peerInfo.channel = 0;
-  peerInfo.encrypt = false;
+  // Register peer GC
+  memcpy(peerInfo_GC.peer_addr, broadcastAddress_GC, 6);
+  peerInfo_GC.channel = 0;
+  peerInfo_GC.encrypt = false;
 
-  // Add peer
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+  // Add peer GC
+  if (esp_now_add_peer(&peerInfo_GC) != ESP_OK) {
     Serial.println("Failed to add peer");
     return;
   }
+
+  // Register peer Release
+  memcpy(peerInfo_Release.peer_addr, broadcastAddress_Release, 6);
+  peerInfo_Release.channel = 0;
+  peerInfo_Release.encrypt = false;
+
+  // Add peer Release
+  if (esp_now_add_peer(&peerInfo_Release) != ESP_OK) {
+    Serial.println("Failed to add peer");
+    return;
+  }
+
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
 }
@@ -40,15 +56,18 @@ void SatComm::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
 }
 
 void SatComm::OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
-  memcpy(&packetBuffer, incomingData, sizeof(packetBuffer));
-  Serial.print("Bytes received: ");
-  Serial.println(len);
-  // print content
-  Serial.print("String: ");
-  Serial.println(packetBuffer.str);
+  if(memcmp(mac, broadcastAddress_GC, sizeof(broadcastAddress_GC)) == 0){
+    memcpy(&packetBuffer, incomingData, sizeof(packetBuffer));
+    lastCommand = packetBuffer.str;
+    commandCallbackFunc(lastCommand);
+  }
 }
 
-void SatComm::sendData(const Packet& dataPacket) {
+void SatComm::sendDataToGC(const Packet& dataPacket) {
   // Send message via ESP-NOW
-  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&dataPacket, sizeof(dataPacket));
+  esp_err_t result = esp_now_send(broadcastAddress_GC, (uint8_t *)&dataPacket, sizeof(dataPacket));
+}
+void SatComm::sendDataToRelease(const Packet& dataPacket) {
+  // Send message via ESP-NOW
+  esp_err_t result = esp_now_send(broadcastAddress_Release, (uint8_t *)&dataPacket, sizeof(dataPacket));
 }

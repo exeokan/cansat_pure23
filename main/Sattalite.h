@@ -16,12 +16,12 @@
 struct CollectiveSensorData
 {
     std::string MISSION_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
-    ALTITUDE, PC_DEPLOYED, TEMPERATURE, VOLTAGE, PRESSURE, GPS_TIME,
+    ALTITUDE, PC_DEPLOYED, TEMPERATURE, PRESSURE, GPS_TIME,
     GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE,
-    GPS_SATS, ACC_X, ACC_Y, ACC_Z, MAG_X, MAG_Y, MAG_Z, TILT_X, TILT_Y, CMD_ECHO;
+    GPS_SATS, ACC_X, ACC_Y, ACC_Z, MAG_X, MAG_Y, MAG_Z, CMD_ECHO;
 };
 
-const uint32_t GPSBaud = 4800;
+const uint32_t GPSBaud = 9600;
 const byte BMP180_12C_Address= 0x77;
 const int RXD1=14;
 const int TXD1=15;
@@ -56,7 +56,6 @@ private:
 
 public:
     Sattalite(std::string);
-    double tilt_xyz[3]={0, 0, 0}; //!
     //test methods
     void SDCardTest();
     void BMP180Test();
@@ -65,18 +64,19 @@ public:
     void fedGPSTest();
     void QMCTest();
     //make some const if you can
-    
+    void CommandRecieved(std::string);
+
     bool detectTakeOff();
-    bool missionFinished();
-    bool isLanded();
+    bool missionFinished() const;
     CollectiveSensorData GatherSensorData();
     void logToSD(const CollectiveSensorData&);
+    void logToSD(const std::string&);
     void feedGPS();
+    void handleTelemetry(const CollectiveSensorData&);
 
-    void activateCAM();
+    void activateCAM() const;
     void sendDataToGC(const CollectiveSensorData&); 
-
-    void calculateTilt();
-    State getState();
-    void listenFromCam();
+    void sendDataToGC(const std::string&);
+    State getState() const;
+    void listenFromCam() const;
 };

@@ -16,36 +16,31 @@ void setup(){
     cansat->BMP180Test();
     cansat->MPUTest();
     cansat->QMCTest();
-    pinMode(4, OUTPUT);*/
-    cansat->activateCAM();
+    pinMode(4, OUTPUT);
+    cansat->activateCAM();*/
 }
-
 //TODO:
-// calculating tilt
-// feed gps in loop[done]
-// python code for interpretation and graphing
-
+//1. add buzzer
+//2. test compass
 long lastFeed = millis();
 long lastDisplay = millis();
-const int feedingRate = 100; // in feed/ms
+const int feedingRate = 400; // in feed/ms
 const int displayRate = 900; // in feed/ms
-void loop(){
-    //cansat->calculateTilt();
-    //cansat->listenFromCam();    
+void loop(){   
+
     if(millis()-lastFeed > feedingRate){
-        cansat->feedGPS(); //Gather sensorda yapmayı iptal et
-        cansat->fedGPSTest();
+        cansat->feedGPS();
         lastFeed=millis();
+        //bunu bmp için de yap? yeni kütüpe bağlı
     }
     if(millis()-lastDisplay > displayRate){
         CollectiveSensorData sensorData = cansat->GatherSensorData();
-        cansat->logToSD(sensorData);
-        cansat->sendDataToGC(sensorData);
+        cansat->handleTelemetry(sensorData);
         Serial.println("----------------------------");
         lastDisplay=millis();
     }
     /*
-    //bunu bmp için de yap? yeni kütüpe bağlı
+
     delay(100);
     State currentState= cansat->getState();
     if(currentState==State::standby){
