@@ -92,7 +92,7 @@ class SerialCommunicationApp:
         self.master.geometry("400x300")
 
         # Serial Port Settings
-        self.serial_port = 'COM9'  # Replace with the appropriate serial port on Windows or '/dev/ttyUSB0' on Linux and macOS
+        self.serial_port = 'COM11'  # Replace with the appropriate serial port on Windows or '/dev/ttyUSB0' on Linux and macOS
         self.baud_rate = 115200
 
         # Create Serial Port
@@ -155,13 +155,13 @@ class SerialCommunicationApp:
                 received_data = self.queue.get(timeout=0.1)
                 self.received_text.insert(tk.END, f"{received_data}\n")
 
-                if received_data.startswith("5655"):
+                if not received_data.startswith("Bytes"):
                     sensor_data = convert_to_struct(concatenated_data=received_data)
                     if sensor_data is not None:
                         self.update_sensor_data(sensor_data)
 
-                    # Scroll to the end after updating
-                    self.received_text.see(tk.END)
+                # Scroll to the end after updating
+                self.received_text.see(tk.END)
 
             except queue.Empty:
                 pass

@@ -30,14 +30,22 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
+void createDir(fs::FS &fs, const char * path){
+    Serial.printf("Creating Dir: %s\n", path);
+    if(fs.mkdir(path)){
+        Serial.println("Dir created");
+    } else {
+        Serial.println("mkdir failed");
+    }
+}
 // Keep track of number of pictures
 unsigned int pictureNumber = 0;
 bool captureBegun=false;
 //Stores the camera configuration parameters
 camera_config_t config;
 
-std::string beginWord="BEGIN";
 int serial_count=0;
+char missionID[4]={0,0,0,0};
 //yesil rx->3
 //mavi tx->1
 void setup() {
@@ -54,14 +62,12 @@ void setup() {
   Serial.print("Initializing the MicroSD card module... ");
   initMicroSDCard();
 }
-
+String folderName="";
 void loop() {
   //Path where new picture will be saved in SD Card
   if(captureBegun){
-    String path = "/picture" + String(pictureNumber) +".jpg";//add folder missionid  
-    //Serial.printf("Picture file name: %s\n", path.c_str());
-
-    //
+    String path = folderName + "/picture" + String(pictureNumber) + ".jpg";
+    Serial.println(path);
     //Take and Save Photo
     takeSavePhoto(path);
     pictureNumber++;
@@ -72,17 +78,23 @@ void loop() {
     }
     while (Serial.available()) {
       char inByte = Serial.read();
-      if(inByte == beginWord[serial_count]){
-        Serial.println(inByte);
+      Serial.print(inByte);
+      Serial.println(serial_count);
+      if(inByte == 'B' && serial_count==0){
         serial_count++;
-        if(serial_count==5){
+      }
+      else if (serial_count > 0 && serial_count < 5) {
+        missionID[serial_count-1] = inByte;
+        serial_count++;
+      
+        if(serial_count == 5){
+          serial_count = 0;
+          folderName = "/mission_" + String(missionID);
+          createDir(SD_MMC, folderName.c_str());
           Serial.println("Capturing now!");
           captureBegun=true;
           break;
         }
-      }
-      else{
-        serial_count = 0; 
       }
     }
   }

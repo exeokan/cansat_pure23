@@ -12,22 +12,21 @@ void setup(){
     bootloader_random_disable();
     cansat = new Sattalite(std::to_string(random)); //problematic? memory leak?
     /*
-    cansat->SDCardTest();
-    cansat->BMP180Test();
-    cansat->MPUTest();
-    cansat->QMCTest();
-    pinMode(4, OUTPUT);
-    cansat->activateCAM();*/
+    buzzer setup
+    pinMode(4, OUTPUT);*/
 }
 //TODO:
 //1. add buzzer
 //2. test compass
+//3. test release esp comm
+//4. plot data
+//5. add constants.h
 long lastFeed = millis();
 long lastDisplay = millis();
 const int feedingRate = 400; // in feed/ms
 const int displayRate = 900; // in feed/ms
 void loop(){   
-
+    cansat->listenFromCam();
     if(millis()-lastFeed > feedingRate){
         cansat->feedGPS();
         lastFeed=millis();

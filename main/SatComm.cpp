@@ -8,8 +8,26 @@ uint8_t broadcastAddress_Release[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 esp_now_peer_info_t peerInfo_GC;
 esp_now_peer_info_t peerInfo_Release;
 
+SatComm* globalSatCommInstance = nullptr;
+
+
 Packet packetBuffer;
-SatComm::SatComm() {
+
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+  Serial.print("\rLast Packet Send Status:\t");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+}
+
+void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
+  if(memcmp(mac, broadcastAddress_GC, sizeof(broadcastAddress_GC)) == 0){
+    memcpy(&packetBuffer, incomingData, sizeof(packetBuffer));
+    globalSatCommInstance->lastCommand = packetBuffer.str;
+    globalSatCommInstance->commandCallbackFunc(packetBuffer.str);
+  }
+}
+SatComm::SatComm(std::function<void(std::string)> _commandCallbackFunc): commandCallbackFunc(_commandCallbackFunc) {
+  // Set the global pointer in the constructor
+  globalSatCommInstance = this;
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
   Serial.print("ESP Board MAC Address:  ");
@@ -34,7 +52,8 @@ SatComm::SatComm() {
     Serial.println("Failed to add peer");
     return;
   }
-
+  /*
+  
   // Register peer Release
   memcpy(peerInfo_Release.peer_addr, broadcastAddress_Release, 6);
   peerInfo_Release.channel = 0;
@@ -45,22 +64,9 @@ SatComm::SatComm() {
     Serial.println("Failed to add peer");
     return;
   }
-
+*/
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
-}
-
-void SatComm::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  Serial.print("\rLast Packet Send Status:\t");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-}
-
-void SatComm::OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
-  if(memcmp(mac, broadcastAddress_GC, sizeof(broadcastAddress_GC)) == 0){
-    memcpy(&packetBuffer, incomingData, sizeof(packetBuffer));
-    lastCommand = packetBuffer.str;
-    commandCallbackFunc(lastCommand);
-  }
 }
 
 void SatComm::sendDataToGC(const Packet& dataPacket) {

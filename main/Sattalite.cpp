@@ -12,7 +12,7 @@ std::string concatenateSensorData(const CollectiveSensorData &data)
      << data.PRESSURE << "," << data.GPS_TIME << "," << data.GPS_ALTITUDE << ","
      << data.GPS_LATITUDE << "," << data.GPS_LONGITUDE << "," << data.GPS_SATS << "," << data.ACC_X << ","
      << data.ACC_Y << "," << data.ACC_Z << "," << data.MAG_X << "," << data.MAG_Y << "," << data.MAG_Z << ","
-     << data.CMD_ECHO;
+     << data.CMD_ECHO << "\n";
 
   return ss.str();
 }
@@ -62,8 +62,13 @@ Sattalite::Sattalite(std::string missionID) : missionID(missionID), missionStart
 void Sattalite::CommandRecieved(std::string command)
 {
   if(command=="REL"){
-      State=State::descent;
-      //deploy parachute
+    state=State::descent;
+    //deploy parachute
+  }
+  else if (command=="CAM")
+  {
+    Serial.println("Activating cam...");
+    activateCAM();
   }
 }
 
@@ -192,6 +197,5 @@ bool Sattalite::missionFinished() const
 // Activate the camera module
 void Sattalite::activateCAM() const
 {
-  Serial1.write("BEGIN");
+  Serial1.write(("B" + missionID).c_str());
 }
-
