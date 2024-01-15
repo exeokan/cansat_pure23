@@ -34,7 +34,6 @@ Sattalite::Sattalite(std::string missionID) : missionID(missionID), missionStart
   {
     Serial.println("BMP180 Found!");
   }
-
   /*MPU6050 init*/
   if (!mpu.begin())
   {
@@ -62,13 +61,17 @@ Sattalite::Sattalite(std::string missionID) : missionID(missionID), missionStart
 void Sattalite::CommandRecieved(std::string command)
 {
   if(command=="REL"){
-    state=State::descent;
-    //deploy parachute
+    state = State::descent;
+    Release_message msg;
+    msg.pressed = true;
+    satComm.sendDataToRelease(msg);
   }
   else if (command=="CAM")
   {
-    Serial.println("Activating cam...");
     activateCAM();
+  }
+  else if(command=="FIN"){
+    state = State::landed;
   }
 }
 
@@ -191,7 +194,7 @@ void Sattalite::listenFromCam() const
 // Check if the mission has finished
 bool Sattalite::missionFinished() const
 {
-  return false;
+  return state == State::landed;
 }
 
 // Activate the camera module

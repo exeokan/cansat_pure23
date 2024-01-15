@@ -89,10 +89,10 @@ class SerialCommunicationApp:
     def __init__(self, master):
         self.master = master
         self.master.title("ESP32 Serial Communication")
-        self.master.geometry("400x300")
+        self.master.geometry("600x400")
 
         # Serial Port Settings
-        self.serial_port = 'COM11'  # Replace with the appropriate serial port on Windows or '/dev/ttyUSB0' on Linux and macOS
+        self.serial_port = 'COM9'  # Replace with the appropriate serial port on Windows or '/dev/ttyUSB0' on Linux and macOS
         self.baud_rate = 115200
 
         # Create Serial Port
@@ -110,7 +110,7 @@ class SerialCommunicationApp:
 
         self.received_text = scrolledtext.ScrolledText(self.master, width=80, height=10)
         self.received_text.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
-
+ 
         # Event to signal the receiving thread to exit
         self.exit_event = threading.Event()
 
