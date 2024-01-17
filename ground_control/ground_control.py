@@ -102,14 +102,24 @@ class SerialCommunicationApp:
         self.message_entry = tk.Entry(self.master, width=40)
         self.message_entry.grid(row=0, column=0, padx=10, pady=10)
 
+        # buttons
         self.send_button = tk.Button(self.master, text="Send", command=self.send_message)
         self.send_button.grid(row=0, column=1, padx=10, pady=10)
 
+        self.release_button = tk.Button(self.master, text="Start", command=self.send_start_command)
+        self.release_button.grid(row=1, column=0, padx=10, pady=10)
+
         self.release_button = tk.Button(self.master, text="Release", command=self.send_release_command)
-        self.release_button.grid(row=0, column=2, padx=10, pady=10)
+        self.release_button.grid(row=1, column=1, padx=10, pady=10)
+        
+        self.release_button = tk.Button(self.master, text="Set DSC", command=self.send_dsc_command)
+        self.release_button.grid(row=2, column=0, padx=10, pady=10)
+
+        self.release_button = tk.Button(self.master, text="Finish", command=self.send_finish_command)
+        self.release_button.grid(row=2, column=1, padx=10, pady=10)
 
         self.received_text = scrolledtext.ScrolledText(self.master, width=80, height=10)
-        self.received_text.grid(row=1, column=0, columnspan=3, padx=10, pady=10)
+        self.received_text.grid(row=3, column=0, columnspan=3, padx=10, pady=10)
  
         # Event to signal the receiving thread to exit
         self.exit_event = threading.Event()
@@ -134,8 +144,14 @@ class SerialCommunicationApp:
             self.ser.write(message.encode())
             self.message_entry.delete(0, tk.END)
 
+    def send_start_command(self):
+        self.ser.write(b"STA")
     def send_release_command(self):
-        self.ser.write(b"REL")
+        self.ser.write(b"REL")  # to release esp
+    def send_dsc_command(self):
+        self.ser.write(b"DSC")
+    def send_finish_command(self):
+        self.ser.write(b"FIN")
 
     def receive_data(self):
         while not self.exit_event.is_set():

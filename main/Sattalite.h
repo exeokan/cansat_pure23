@@ -13,6 +13,12 @@
 #include "SatComm.h"
 #include "SDCard.h"
 
+const uint32_t GPSBaud = 9600;
+const byte BMP180_12C_Address= 0x77;
+const int RXD1=14;
+const int TXD1=15;
+const int SerialBaud = 115200;
+
 struct CollectiveSensorData
 {
     std::string MISSION_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE,
@@ -20,11 +26,6 @@ struct CollectiveSensorData
     GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE,
     GPS_SATS, ACC_X, ACC_Y, ACC_Z, MAG_X, MAG_Y, MAG_Z, CMD_ECHO;
 };
-
-const uint32_t GPSBaud = 9600;
-const byte BMP180_12C_Address= 0x77;
-const int RXD1=14;
-const int TXD1=15;
 
 enum State{
     standby = 0, 
@@ -50,10 +51,7 @@ private:
     std::string missionID;
     long missionStartTime;
     State state = State::standby;
-    bool pc_deployed=false;
-
     std::string fileName;
-
 public:
     Sattalite(std::string);
     //test methods

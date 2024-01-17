@@ -21,7 +21,7 @@ Sattalite::Sattalite(std::string missionID) : missionID(missionID), missionStart
 {
   if (!Serial)
   {
-    Serial.begin(115200); // when usb is disconnected?
+    Serial.begin(SerialBaud); // when usb is disconnected?
   }
   /*BMP180 init*/
   Wire.begin();
@@ -54,23 +54,21 @@ Sattalite::Sattalite(std::string missionID) : missionID(missionID), missionStart
   /*QMC Init*/
   compass.init();
   /*Serial for espcam comm*/
-  Serial1.begin(115200, SERIAL_8N1, RXD1, TXD1);
+  Serial1.begin(SerialBaud, SERIAL_8N1, RXD1, TXD1);
   fileName = "/record" + missionID + ".txt";
 }
 
 void Sattalite::CommandRecieved(std::string command)
 {
-  if(command=="REL"){
-    state = State::descent;
-    Release_message msg;
-    msg.pressed = true;
-    satComm.sendDataToRelease(msg);
-  }
-  else if (command=="CAM")
-  {
+  if (command=="STA"){
+    state = State::ascent;
     activateCAM();
   }
+  else if(command=="DSC"){
+    state = State::descent;
+  }
   else if(command=="FIN"){
+    //this will enable buzzer in the main loop and stop sending data to the ground control
     state = State::landed;
   }
 }
@@ -113,7 +111,7 @@ CollectiveSensorData Sattalite::GatherSensorData()
   }
   data.GPS_SATS = gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
   // parac deployed
-  data.PC_DEPLOYED = std::to_string(pc_deployed);
+  data.PC_DEPLOYED = std::to_string(state == State::descent);
   // bmp data
   data.TEMPERATURE = std::to_string(bmp.readTemperature());
   // Calculate altitude assuming 'standard' barometric(!!!!!) pressure of 1013.25 millibar = 101325 Pascal

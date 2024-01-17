@@ -4,10 +4,7 @@
 #include <functional>
 
 struct Packet {
-  char str[200];  // Adjust the size based on your needs
-};
-struct Release_message {
-    bool pressed;
+  char str[200];
 };
 class SatComm
 {
@@ -18,5 +15,4 @@ public:
     std::function<void(std::string)> commandCallbackFunc; 
     SatComm(std::function<void(std::string)> _commandCallbackFunc);
     void sendDataToGC(const Packet&);
-    void sendDataToRelease(const Release_message&);
 };
