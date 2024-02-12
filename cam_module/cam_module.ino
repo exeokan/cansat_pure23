@@ -1,3 +1,8 @@
+/**
+ * @file cam_module.ino
+ * @brief This file contains the code for the camera module(ESP32-CAM) of the satellite.
+*/
+
 /*********
   Rui Santos
   Complete project details at https://RandomNerdTutorials.com/esp32-cam-ov2640-camera-settings/
@@ -46,11 +51,10 @@ camera_config_t config;
 
 int serial_count=0;
 char missionID[4]={0,0,0,0};
-//yesil rx->3
-//mavi tx->1
+
 void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); //disable brownout detector
-  //for serial with esp32
+  //for serial with main esp32 module of the satellite/ or for debugging over usb
   Serial.begin(115200);
 
   //Initialize the camera  
@@ -76,22 +80,24 @@ void loop() {
     if(!Serial){
       Serial.begin(115200);
     }
+    // Listen for serial data from the main module
     while (Serial.available()) {
       char inByte = Serial.read();
-      Serial.print(inByte);
-      Serial.println(serial_count);
-      if(inByte == 'B' && serial_count==0){
+      if(inByte == 'B' && serial_count==0){ // B is the start of the mission ID
         serial_count++;
       }
+      // after 'B' is received, the next 4 bytes are the mission ID
       else if (serial_count > 0 && serial_count < 5) {
         missionID[serial_count-1] = inByte;
         serial_count++;
       
         if(serial_count == 5){
           serial_count = 0;
+          // Create a folder for the mission
           folderName = "/mission_" + String(missionID);
           createDir(SD_MMC, folderName.c_str());
           Serial.println("Capturing now!");
+          // Start capturing
           captureBegun=true;
           break;
         }
@@ -140,7 +146,7 @@ void configInitCamera(){
     Serial.printf("Camera init failed with error 0x%x", err);
     return;
   }
-
+  // These parameters are adjusted to the best values for the camera module with experimentations
   sensor_t * s = esp_camera_sensor_get();
   s->set_brightness(s, 1);     // -2 to 2
   s->set_contrast(s, 0);       // -2 to 2

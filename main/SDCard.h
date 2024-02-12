@@ -1,3 +1,9 @@
+/**
+ * @file SDCard.h
+ * @brief The SDCard class provides functionality for interacting with an SD card. 
+ * Majortiy of the methods are taken from the SD example in the Arduino IDE.
+ */
+
 #pragma once
 
 #include "FS.h"
@@ -7,7 +13,6 @@
 class SDCard
 {
 private:
-    /* data */
     bool working;
 public:
     SDCard(/* args */);

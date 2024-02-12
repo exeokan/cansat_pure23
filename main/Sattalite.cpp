@@ -3,6 +3,7 @@
 
 std::string state_names[] = {"STANDBY", "ASCENT", "DESCENT", "LANDED"};
 
+//Concatenate the sensor data into a single string to be sent to the ground control as telemetry
 std::string concatenateSensorData(const CollectiveSensorData &data)
 {
   std::stringstream ss;
@@ -16,25 +17,27 @@ std::string concatenateSensorData(const CollectiveSensorData &data)
 
   return ss.str();
 }
+
+/**
+ * @brief Constructor for the Sattalite class
+ * @param missionID The mission ID of the satellite, a random string of numerals
+*/
 Sattalite::Sattalite(std::string missionID) : missionID(missionID), missionStartTime(millis()),
-  satComm(std::bind(&Sattalite::CommandRecieved, this, std::placeholders::_1))
+  satComm(std::bind(&Sattalite::CommandRecieved, this, std::placeholders::_1)), // bind the command received method to the satComm
+  n_packetsSent(0), state(State::standby), 
+  fileName("/record" + missionID + ".txt") // Set the file name for the SD card
 {
   if (!Serial)
   {
-    Serial.begin(SerialBaud); // when usb is disconnected?
+    Serial.begin(SerialBaud);
   }
-  /*BMP180 init*/
+  /* BMP180 init */
   Wire.begin();
   if (!bmp.begin())
-  {
     Serial.println("begin() failed. check your BMP180 Interface and I2C Address.");
-    // error code
-  }
   else
-  {
     Serial.println("BMP180 Found!");
-  }
-  /*MPU6050 init*/
+  /* MPU6050 init */
   if (!mpu.begin())
   {
     Serial.println("Failed to find MPU6050 chip");
@@ -55,24 +58,26 @@ Sattalite::Sattalite(std::string missionID) : missionID(missionID), missionStart
   compass.init();
   /*Serial for espcam comm*/
   Serial1.begin(SerialBaud, SERIAL_8N1, RXD1, TXD1);
-  fileName = "/record" + missionID + ".txt";
 }
 
-void Sattalite::CommandRecieved(std::string command)
+// Process the command received from the ground control
+void Sattalite::CommandRecieved(std::string recievedCommand)
 {
-  if (command=="STA"){
+  if (recievedCommand=="STA"){
     state = State::ascent;
     activateCAM();
   }
-  else if(command=="DSC"){
+  else if(recievedCommand=="DSC"){
     state = State::descent;
   }
-  else if(command=="FIN"){
+  else if(recievedCommand=="FIN"){
     //this will enable buzzer in the main loop and stop sending data to the ground control
     state = State::landed;
   }
 }
 
+
+// Feed the GPS data to the TinyGPSPlus object
 void Sattalite::feedGPS()
 {
   while (Serial2.available() > 0)
@@ -85,6 +90,8 @@ void Sattalite::feedGPS()
   }
 }
 
+
+//Gather sensor data from the satellite
 CollectiveSensorData Sattalite::GatherSensorData()
 {
   CollectiveSensorData data;
@@ -110,7 +117,7 @@ CollectiveSensorData Sattalite::GatherSensorData()
     data.GPS_TIME = "?";
   }
   data.GPS_SATS = gps.satellites.isValid() ? std::to_string(gps.satellites.value()) : "?";
-  // parac deployed
+  // parachute deployed
   data.PC_DEPLOYED = std::to_string(state == State::descent);
   // bmp data
   data.TEMPERATURE = std::to_string(bmp.readTemperature());
@@ -130,7 +137,7 @@ CollectiveSensorData Sattalite::GatherSensorData()
   data.MAG_X = std::to_string(compass.getX());
   data.MAG_Y = std::to_string(compass.getY());
   data.MAG_Z = std::to_string(compass.getZ());
-  // cmd
+  // return the last command received from the ground control
   data.CMD_ECHO = satComm.lastCommand;
   return data;
 }
@@ -180,6 +187,7 @@ State Sattalite::getState() const
 }
 
 // Listen for serial data from the camera module
+// this is necessary since the camera module is connected to the ESP32 via its only serial bus
 void Sattalite::listenFromCam() const
 {
   while (Serial1.available())

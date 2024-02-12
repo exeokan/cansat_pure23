@@ -1,3 +1,7 @@
+/**
+ * @file Sattalite.h
+ * @brief This file contains the declaration of the Sattalite class and related structures and enums.
+ */
 #pragma once
 
 #include <Arduino.h>
@@ -33,25 +37,32 @@ enum State{
     descent = 2,
     landed = 3
 };
-extern std::string state_names[];
+extern std::string state_names[]; //defined in Sattalite.cpp, used to convert enum state data into string equivalent
 
+/**
+ * @class Sattalite
+ * @brief The Sattalite class represents a satellite object that collects sensor data and communicates with ground control.
+ * It contains member variables and methods for handling various sensors such as BMP085, MPU6050, GPS, and QMC5883LCompass.
+ * The class also includes methods for testing the functionality of each sensor, logging data to an SD card, and sending data to ground control.
+ * The class provides methods for detecting takeoff, checking if the mission is finished, gathering sensor data, and handling telemetry.
+ * Additionally, it has methods for activating the camera(ESP32-CAM), listening for data from the camera, and receiving commands from ground control.
+ */
 class Sattalite
 {
 private:
-    SDCard sdCard;
     Adafruit_BMP085 bmp;
     Adafruit_MPU6050 mpu;
     Adafruit_Sensor *mpu_accel, *mpu_gyro;
     TinyGPSPlus gps;
     QMC5883LCompass compass;
 
+    SDCard sdCard;
     SatComm satComm;
 
-    int n_packetsSent=0;
-    std::string missionID;
+    int n_packetsSent;
+    std::string missionID, fileName;
     long missionStartTime;
-    State state = State::standby;
-    std::string fileName;
+    State state;
 public:
     Sattalite(std::string);
     //test methods
@@ -61,20 +72,23 @@ public:
     void GPSTest();
     void fedGPSTest();
     void QMCTest();
-    //make some const if you can
+    
     void CommandRecieved(std::string);
 
-    bool detectTakeOff();
+    bool detectTakeOff(); // hasn't been implemented yet
     bool missionFinished() const;
-    CollectiveSensorData GatherSensorData();
-    void logToSD(const CollectiveSensorData&);
-    void logToSD(const std::string&);
+    State getState() const;
+    
     void feedGPS();
-    void handleTelemetry(const CollectiveSensorData&);
 
     void activateCAM() const;
+    void listenFromCam() const;
+
+    //Telemetry related methods
+    CollectiveSensorData GatherSensorData();
     void sendDataToGC(const CollectiveSensorData&); 
     void sendDataToGC(const std::string&);
-    State getState() const;
-    void listenFromCam() const;
+    void handleTelemetry(const CollectiveSensorData&);
+    void logToSD(const CollectiveSensorData&);
+    void logToSD(const std::string&);
 };

@@ -1,3 +1,6 @@
+'''
+This is the ground control software for the satellite. It is used to send commands to the satellite and receive data from the satellite.
+'''
 import tkinter as tk
 from tkinter import scrolledtext
 import serial

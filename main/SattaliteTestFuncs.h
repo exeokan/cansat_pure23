@@ -1,3 +1,10 @@
+/**
+ * @file SattaliteTestFuncs.h
+ * @brief This file contains functions for testing various components of the satellite system.
+ * It is to be included Sattalite.cpp
+ * Majority of the functions are taken from the examples of the libraries used.
+ */
+
 #include "Sattalite.h"
 void displayGPSInfo(TinyGPSPlus &gps);
 void Sattalite::SDCardTest(){
@@ -60,6 +67,7 @@ void Sattalite::MPUTest()
   Serial.println(" degC");
 }
 
+//this function needs to be called in a loop
 void Sattalite::GPSTest()
 {
   // This sketch displays information every time a new sentence is correctly encoded.

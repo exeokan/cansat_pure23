@@ -1,13 +1,10 @@
-// SatComm.cpp
 #include "SatComm.h"
 
-
+// Broadcast address for the ground control
 uint8_t broadcastAddress_GC[] = {0xE0, 0x5A, 0x1B, 0xA0, 0xC8, 0xE8};
 
 esp_now_peer_info_t peerInfo_GC;
-
 SatComm* globalSatCommInstance = nullptr;
-
 Packet packetBuffer;
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
@@ -25,6 +22,7 @@ SatComm::SatComm(std::function<void(std::string)> _commandCallbackFunc): command
   globalSatCommInstance = this;
   // Set device as a Wi-Fi Station
   WiFi.mode(WIFI_STA);
+  // Print the MAC address of the ESP board
   Serial.print("ESP Board MAC Address:  ");
   Serial.println(WiFi.macAddress());
   // Init ESP-NOW

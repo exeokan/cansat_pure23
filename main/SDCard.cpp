@@ -1,25 +1,18 @@
 #include "SDCard.h"
-SDCard::SDCard(/* args */)
+
+SDCard::SDCard()
 {
     if(!Serial){
-        Serial.begin(115200); // DANGEROUS CODE!!!!!!!!!!11
-        //this Serial is for USB??
-        //https://www.arduino.cc/reference/en/language/functions/communication/serial/
+        Serial.begin(115200); 
     }
     if(!SD.begin()){
         working=false;
         Serial.println("SDCard Mount Failed");
-        return;
     }
     else{
         Serial.println("SDCard found!");
         working=true;
     }
-}
-
-SDCard::~SDCard()
-{
-    //anything to go there?
 }
 
 void SDCard::listDir(const char * dirname, uint8_t levels){
