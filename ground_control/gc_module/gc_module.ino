@@ -3,7 +3,7 @@
  * @brief This file contains the code for the bridge between ground control software and the satellite.
  * It recieves telemetry data from the satellite over ESP-NOW and writes it to the serial port.
  * It recieves commands from the ground control software via serial and sends commands to the satellite over ESP-NOW.
- * 
+ * @note Serial prints are to be handled by the ground control software.
 */
 #include <esp_now.h>
 #include <WiFi.h>
@@ -73,10 +73,10 @@ void setup() {
 
 std::string serialBuffer="";
 void loop() {
-  while (Serial.available() > 0) {
+  while (Serial.available() > 0) {//when there is data on the serial port
     // Read the incoming byte
     char incomingByte = Serial.read();
-    serialBuffer+= incomingByte;
+    serialBuffer += incomingByte;
     delay(10);
   }
   if(serialBuffer!=""){

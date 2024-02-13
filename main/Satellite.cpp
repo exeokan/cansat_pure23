@@ -1,5 +1,5 @@
-#include "Sattalite.h"
-#include "SattaliteTestFuncs.h"
+#include "Satellite.h"
+#include "SatelliteTestFuncs.h"
 
 std::string state_names[] = {"STANDBY", "ASCENT", "DESCENT", "LANDED"};
 

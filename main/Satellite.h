@@ -1,5 +1,5 @@
 /**
- * @file Sattalite.h
+ * @file Satellite.h
  * @brief This file contains the declaration of the Sattalite class and related structures and enums.
  */
 #pragma once

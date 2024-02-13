@@ -1,11 +1,12 @@
 /**
  * @file cam_module.ino
  * @brief This file contains the code for the camera module(ESP32-CAM) of the satellite.
+ * @note This code also disables the auto flash of the ESP32-CAM module, see initMicroSDCard function
 */
 
 /*********
-  Rui Santos
-  Complete project details at https://RandomNerdTutorials.com/esp32-cam-ov2640-camera-settings/
+  Modified code of Rui Santos
+  Original project details at https://RandomNerdTutorials.com/esp32-cam-ov2640-camera-settings/
 *********/
 
 #include "esp_camera.h"

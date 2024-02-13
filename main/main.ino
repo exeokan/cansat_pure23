@@ -1,13 +1,13 @@
-#include "Sattalite.h"
+#include "Satellite.h"
 
 #include "bootloader_random.h"
 #include "esp_random.h"
 
 const int buzzerPin = 4;
 long lastFeed = millis();
-long lastDisplay = millis();
+long lastTelemetry = millis();
 const int feedingRate = 400; // in feed/ms
-const int displayRate = 900; // in packet/ms, aim for 1Hz, set to 900ms to account for processing time
+const int telemetryRate = 900; // in packet/ms, aim for 1Hz, set to 900ms to account for processing time
 Sattalite* cansat;
 
 void setup(){
@@ -15,9 +15,9 @@ void setup(){
     Serial.begin(115200);
     //get random seed
     bootloader_random_enable();
-    int random=esp_random() % 10000;
+    int random = esp_random() % 10000;
     bootloader_random_disable();
-    //initialize satellite
+    //initialize satellite object
     cansat = new Sattalite(std::to_string(random));
     //buzzer setup
     pinMode(buzzerPin, OUTPUT);
@@ -30,11 +30,11 @@ void loop(){
         lastFeed=millis();
     }
     //gather sensor data and send it to the ground control
-    if(millis()-lastDisplay > displayRate){
+    if(millis()-lastTelemetry > telemetryRate){
         CollectiveSensorData sensorData = cansat->GatherSensorData();
         cansat->handleTelemetry(sensorData);
-        Serial.println("----------------------------");
-        lastDisplay=millis();
+        Serial.println("----------------------------"); //to seperate packet logs(sdcard and espnow)
+        lastTelemetry=millis();
     }
     // if mission is finished, activate the buzzer and delete the satellite object
     if(cansat->missionFinished()){
