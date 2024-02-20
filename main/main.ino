@@ -33,7 +33,7 @@ void loop(){
     if(millis()-lastTelemetry > telemetryRate){
         CollectiveSensorData sensorData = cansat->GatherSensorData();
         cansat->handleTelemetry(sensorData);
-        Serial.println("----------------------------"); //to seperate packet logs(sdcard and espnow)
+        Serial.println("----------------------------"); //to seperate packet logs(from sdcard and espnow)
         lastTelemetry=millis();
     }
     // if mission is finished, activate the buzzer and delete the satellite object
