@@ -59,6 +59,8 @@ Adafruit BMP085 library also supports BMP180 modules and it is used in the progr
 
 Because the HMC5883L module we had has an alternative chip, the QMC5883LCompass library was used.
 
+Our SD-Card module only worked over 5 volts.
+
 Because ESP-32 doesn't support the SoftwareSerial library of Arduino, the GPS module is connected via TX2/RX2 pins on ESP-32 and the TinyGPSPlus library is used with the Serial2 object of ESP-32 software.
 
 Uploading software to ESP32-CAM was a bit tricky, for our module, we had to connect the IO0 pin to the ground next to it when we turned it on. That way it goes into download mode and you can upload the code from the Arduino IDE. (with ESP32-CAM AI-Thinker board selected)
@@ -106,7 +108,7 @@ Landing can also be detected using measurements from the mpu6050 module. The pay
 
 - Plotting
 
-One objective of the project was to plot the numerical values of the telemetry packets such as altitude, pressure, acceleration, and so on.
+One objective of the project, which wasn't implemented, was to plot the numerical values of the telemetry packets such as altitude, pressure, acceleration, and so on.
 
 - Constants file
 
